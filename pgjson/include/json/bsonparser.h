@@ -22,12 +22,12 @@
  * the high order bit of the document size on the root is 1 (negative value), then
  * it is not a valid BSON document, meaning it can be a valid "something else".
  *
- * In order to make as few changes to the format as possible, we introduce the following
- * definition:
- *    root ::= negatedelement
- *           | document
+ * Taking some liberties with the BNF from bsonspec.org, the tag_byte is the negated
+ * value of the element leading byte from the "element" type.  For example, "\xff"
+ * is -1 in decimal and would be a double (normal tag value is "\x01").  Similarly,
+ * "\xfe" is -2 and a string.
  *
- *    negatedelement ::= element (but with the tag value negated)
+ * See the extended_bson.txt file in the project root for a full grammar.
  *
  * This makes the values (-255, -1) of the leading int32 reserved, denoting that this
  * is a "bson value" to be interpreted as a single value with the tag -prefix.  For

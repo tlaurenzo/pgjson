@@ -77,7 +77,7 @@ int stringwriter_append_codepoint(stringwriter_t *self, uint32_t codepoint);
  * as 0xc0 0x80.  Appends a null to the end.
  * Returns 0 on failure
  */
-int stringwriter_append_modified_utf8z(stringwriter_t *self, char* source, size_t bytes);
+int stringwriter_append_modified_utf8z(stringwriter_t *self, uint8_t* source, size_t bytes);
 
 /**
  * Reads a zero terminated string that has been encoded with modified UTF-8,

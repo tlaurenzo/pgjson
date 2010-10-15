@@ -59,17 +59,17 @@ inline double convert_float(YYSTYPE *target, char *text)
 	else return UNRECOGNIZED;
 }
 
-inline uint32_t convert_octal_escape(char *t)
+static inline uint32_t convert_octal_escape(char *t)
 {
 	return strtoul(t+1, 0, 8);
 }
 
-inline uint32_t convert_hex_escape(char *t)
+static inline uint32_t convert_hex_escape(char *t)
 {
 	return strtoul(t+2, 0, 16);
 }
 
-inline uint32_t convert_uni_escape(char *t)
+static inline uint32_t convert_uni_escape(char *t)
 {
 	return strtoul(t+2, 0, 16);
 }
@@ -127,7 +127,7 @@ inline uint32_t convert_uni_escape(char *t)
 "-Infinity"		{ yylval->floatval=-INFINITY; return FLOAT; }
 
 	/* Identifier */
-[a-zA-Z_][0-9a-zA-Z_]*	{
+[a-zA-Z_\$][0-9a-zA-Z_\$]*	{
 	/** Make copy in accumulator **/
 	stringwriter_clear(&yyextra->string_accum);
 	stringwriter_append(&yyextra->string_accum, yytext, yyleng);

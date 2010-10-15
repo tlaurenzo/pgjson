@@ -207,7 +207,7 @@ int stringwriter_write(stringwriter_t *self, size_t pos, const void *source, siz
 	return rc;
 }
 
-int stringwriter_append_modified_utf8z(stringwriter_t *self, char* source, size_t bytes)
+int stringwriter_append_modified_utf8z(stringwriter_t *self, uint8_t* source, size_t bytes)
 {
 	/* Write in span sized traunches to avoid alloc calls */
 	size_t mark=0;
