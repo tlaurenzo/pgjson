@@ -40,7 +40,7 @@ bool jsonpath_iter_next(jsonpathiter_t *iter)
 	const uint8_t *value_start;
 
 	/* did we clear next_value on previous run or short buffer - return false */
-	if ((this_value>=bufferlimit) || (bufferlimit - this_value) < 3 || !*(this_value)) return false;
+	if (!this_value || (this_value>=bufferlimit) || (bufferlimit - this_value) < 3 || !*(this_value)) return false;
 
 	/* this_value points to the start of the next block */
 
