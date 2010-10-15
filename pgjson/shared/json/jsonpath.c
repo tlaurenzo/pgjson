@@ -98,10 +98,13 @@ bool jsonpath_parse(stringwriter_t *bufferout, uint8_t *utf8stream, size_t strea
 {
 	/* setup */
 	jsonpath_parsestate_t state;
+
+	state.bufferout=bufferout;
 	state.stream=utf8stream;
 	state.streamlimit=utf8stream+streamlen;
 	state.error_msg=0;
 	state.has_error=false;
+
 	yyjsonpathlex_init(&state.scanner);
 	yyjsonpathset_extra(&state, state.scanner);
 	stringwriter_init(&state.string_accum, 256);

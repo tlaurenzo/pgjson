@@ -63,8 +63,8 @@ static inline uint32_t convert_uni_escape(char *t)
 										   }
 <STRINGLITERAL>.					{ BEGIN INITIAL; return UNRECOGNIZED; }
 
-[0-9]+                        { return NUMERIC; }
-[a-zA-Z_\$][0-9a-zA-Z_\$]*	   { return IDENTIFIER; }
+[0-9]+                        { yylval->stringval.length=yyleng; yylval->stringval.bytes=yytext; return NUMERIC; }
+[a-zA-Z_\$][0-9a-zA-Z_\$]*	   { yylval->stringval.length=yyleng; yylval->stringval.bytes=yytext; return IDENTIFIER; }
 
    /* Whitespace */
 [ \t\r\n]                     { /* nothing */ }

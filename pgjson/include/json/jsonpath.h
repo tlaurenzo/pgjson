@@ -50,10 +50,12 @@
 #include "json/bsonparser.h"
 
 typedef enum {
-	JSONPATHTYPE_SIMPLENAME=1,
+	JSONPATHTYPE_IDENTIFIER=1,
+	JSONPATHTYPE_STRING=2,
+	JSONPATHTYPE_NUMERIC=3,
 
 	/* for range checks */
-	JSONPATHTYPE_MAXVALUE=1
+	JSONPATHTYPE_MAXVALUE=3
 } jsonpathtype_t;
 
 typedef struct {
@@ -100,10 +102,14 @@ bool jsonpath_iter_next(jsonpathiter_t *iter);
  * Internal parsestate structure used to coordinate with lex and yacc.
  */
 typedef struct {
+	/* output buffer passed to jsonpath_parse */
+	stringwriter_t *bufferout;
+
 	void *scanner;
 	bool has_error;
 	char *error_msg;
 
+	/* input stream */
 	uint8_t *stream;
 	uint8_t *streamlimit;
 

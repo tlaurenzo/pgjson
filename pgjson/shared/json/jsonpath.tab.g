@@ -58,14 +58,19 @@ pathtail
       ;
       
 pathitem
-      : IDENTIFIER
+      : IDENTIFIER   { jsonpath_append(context->bufferout, JSONPATHTYPE_IDENTIFIER, $1.bytes, $1.length); }
       | bracketitem
       ;
      
 bracketitem
-      : LBRACKET STRING RBRACKET
-      | LBRACKET NUMERIC RBRACKET
+      : LBRACKET bracketexpr RBRACKET
       ;
+      
+bracketexpr
+      : STRING   { jsonpath_append(context->bufferout, JSONPATHTYPE_STRING, $1.bytes, $1.length); }
+      | NUMERIC  { jsonpath_append(context->bufferout, JSONPATHTYPE_NUMERIC, $1.bytes, $1.length); }
+      ;
+
 
 
 %%

@@ -10,6 +10,7 @@ FILE *arg_output;
 char  arg_input_format;  /* 'J' or 'B' */
 char **arg_expressions;
 int  arg_expression_count;
+bool arg_debug=true;
 
 uint8_t *bson_buffer;
 size_t   bson_buffer_len;
@@ -18,7 +19,7 @@ int process_expression(char *exprtext)
 {
 	stringwriter_t exprbin;
 
-	fprintf(stderr, "Parsing expression: %s\n", exprtext);
+	if (arg_debug) fprintf(stderr, "Parsing expression: %s\n", exprtext);
 
 	stringwriter_init(&exprbin, 512);
 	if (!jsonpath_parse(&exprbin, exprtext, strlen(exprtext))) {
@@ -26,8 +27,10 @@ int process_expression(char *exprtext)
 		return 4;
 	}
 
-	fprintf(arg_output, "Expression value:\n");
-	hexdump(arg_output, exprbin.string, exprbin.pos);
+	if (arg_debug) {
+		fprintf(stderr, "Expression value:\n");
+		hexdump(stderr, exprbin.string, exprbin.pos);
+	}
 
 	return 0;
 }
@@ -68,15 +71,23 @@ int process_input_bson()
 
 int process_input()
 {
+	int rc;
 	if (arg_input_format=='J' || arg_input_format==' ') {
 		/* Parse json */
-		return process_input_json();
+		rc=process_input_json();
 	} else if (arg_input_format=='B') {
 		/* Parse bson */
-		return process_input_bson();
+		rc=process_input_bson();
 	} else {
 		return 3;
 	}
+
+	if (rc==0 && arg_debug) {
+		fprintf(stderr, "Parsed Input:\n");
+		hexdump(stderr, bson_buffer, bson_buffer_len);
+	}
+
+	return rc;
 }
 
 char parse_format(char *fmt)
