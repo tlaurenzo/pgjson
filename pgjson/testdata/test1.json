@@ -1,0 +1,11 @@
+{
+	first : 1,
+	second : 2,
+	third: "value\tnext\n",
+	fourth: 'value\tnext\n',
+	abc: 1.234,
+	def: true,
+	fgr: null,
+	bigint: 1000000000000,
+	array: [ 1, 2, 3]
+}

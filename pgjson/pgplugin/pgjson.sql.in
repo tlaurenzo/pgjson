@@ -1,0 +1,126 @@
+SET client_min_messages TO warning;
+
+BEGIN;
+
+/*** jsonbinary datatype ***/
+DROP TYPE IF EXISTS jsonbinary CASCADE;
+CREATE TYPE jsonbinary;
+
+CREATE OR REPLACE FUNCTION jsonbinary_in(cstring)
+   RETURNS jsonbinary
+   AS 'MODULE_PATHNAME','pgjson_jsonbinary_in'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION jsonbinary_out(jsonbinary)
+   RETURNS cstring
+   AS 'MODULE_PATHNAME', 'pgjson_jsonbinary_out'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION jsonbinary_recv(internal)
+   RETURNS jsonbinary
+   AS 'MODULE_PATHNAME', 'pgjson_jsonbinary_recv'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION jsonbinary_send(jsonbinary)
+   RETURNS bytea
+   AS 'MODULE_PATHNAME', 'pgjson_jsonbinary_send'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+   
+CREATE TYPE jsonbinary (
+   internallength = variable,
+   alignment = int4,
+   storage = main,
+   input = jsonbinary_in,
+   output = jsonbinary_out,
+   send = jsonbinary_send,
+   receive = jsonbinary_recv
+);
+
+CREATE OR REPLACE FUNCTION jsonbinary_to_text(jsonbinary)
+   RETURNS text
+   AS 'MODULE_PATHNAME', 'pgjson_jsonbinary_to_text'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION jsonbinary_from_text(text)
+   RETURNS jsonbinary
+   AS 'MODULE_PATHNAME', 'pgjson_jsonbinary_from_text'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION jsonbinary_from_varchar(varchar)
+   RETURNS jsonbinary
+   AS 'MODULE_PATHNAME', 'pgjson_jsonbinary_from_text'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+   
+CREATE CAST (jsonbinary AS text)
+   WITH FUNCTION jsonbinary_to_text(jsonbinary)
+   AS ASSIGNMENT;
+CREATE CAST (text AS jsonbinary)
+   WITH FUNCTION jsonbinary_from_text(text)
+   AS ASSIGNMENT;
+CREATE CAST (varchar AS jsonbinary)
+   WITH FUNCTION jsonbinary_from_varchar(varchar)
+   AS ASSIGNMENT;
+CREATE CAST (jsonbinary as bytea)
+   WITHOUT FUNCTION
+   AS IMPLICIT;
+CREATE CAST (bytea as jsonbinary)
+   WITHOUT FUNCTION
+   AS IMPLICIT;
+   
+/*** json datatype ***/
+DROP TYPE IF EXISTS json CASCADE;
+CREATE TYPE json;
+
+CREATE OR REPLACE FUNCTION jsontext_in(cstring)
+   RETURNS json
+   AS 'MODULE_PATHNAME','pgjson_jsontext_in'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION jsontext_out(json)
+   RETURNS cstring
+   AS 'MODULE_PATHNAME', 'pgjson_jsontext_out'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+
+CREATE TYPE json (
+   internallength = variable,
+   alignment = int4,
+   storage = main,
+   input = jsontext_in,
+   output = jsontext_out
+);
+
+CREATE OR REPLACE FUNCTION json_to_text(json)
+   RETURNS text
+   AS 'MODULE_PATHNAME', 'pgjson_jsonbinary_to_text'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION json_from_text(text)
+   RETURNS json
+   AS 'MODULE_PATHNAME', 'pgjson_jsonbinary_from_text'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION json_from_varchar(varchar)
+   RETURNS json
+   AS 'MODULE_PATHNAME', 'pgjson_jsonbinary_from_text'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+
+/* casts between json and jsonbinary */
+CREATE CAST (json AS jsonbinary)
+   WITHOUT FUNCTION
+   AS IMPLICIT;
+CREATE CAST (jsonbinary AS json)
+   WITHOUT FUNCTION
+   AS IMPLICIT;
+
+/* other primitive casts */
+CREATE CAST (json AS text)
+   WITH FUNCTION json_to_text(json)
+   AS ASSIGNMENT;
+CREATE CAST (text AS json)
+   WITH FUNCTION json_from_text(text)
+   AS ASSIGNMENT;
+CREATE CAST (varchar AS json)
+   WITH FUNCTION json_from_varchar(varchar)
+   AS ASSIGNMENT;
+CREATE CAST (json as bytea)
+   WITHOUT FUNCTION
+   AS IMPLICIT;
+CREATE CAST (bytea as json)
+   WITHOUT FUNCTION
+   AS IMPLICIT;
+
+   
+COMMIT;
+
