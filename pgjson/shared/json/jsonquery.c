@@ -18,20 +18,38 @@ size_t   bson_buffer_len;
 int process_expression(char *exprtext)
 {
 	stringwriter_t exprbin;
+	stringwriter_t exprser;
+	jsonpathiter_t iter;
 
 	if (arg_debug) fprintf(stderr, "Parsing expression: %s\n", exprtext);
 
 	stringwriter_init(&exprbin, 512);
 	if (!jsonpath_parse(&exprbin, exprtext, strlen(exprtext))) {
 		fprintf(stderr, "Error parsing expression: %s\n", exprbin.string);
+		stringwriter_destroy(&exprbin);
 		return 4;
 	}
 
 	if (arg_debug) {
-		fprintf(stderr, "Expression value:\n");
+		/* dump the binary */
+		fprintf(stderr, "Expression binary:\n");
 		hexdump(stderr, exprbin.string, exprbin.pos);
+		fprintf(stderr, "Expression text:\n");
+		stringwriter_init(&exprser, 512);
+
+		jsonpath_iter_begin(&iter, exprbin.string, exprbin.pos);
+		if (jsonpath_serialize(&exprser, &iter)) {
+			stringwriter_append_byte(&exprser, 0);
+			fprintf(stderr, "\t%s\n", exprser.string);
+		} else {
+			fprintf(stderr, "ERROR: Could not serialize expression\n");
+		}
+
+		stringwriter_destroy(&exprser);
 	}
 
+
+	stringwriter_destroy(&exprbin);
 	return 0;
 }
 

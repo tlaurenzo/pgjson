@@ -67,6 +67,8 @@ typedef struct {
 	jsonpathtype_t current_type;
 	/* current_value modified utf8 stringz */
 	const uint8_t *current_value;
+	/* length of current_value (not counting null) */
+	size_t current_value_length;
 
 	/* next value */
 	const uint8_t *next_value;
@@ -88,7 +90,7 @@ void jsonpath_append(stringwriter_t *buffer, jsonpathtype_t type, uint8_t *utf8s
  * 			// do something
  * 		}
  */
-void jsonpath_iter_begin(jsonpathiter_t *iter, const uint8_t *buffer, size_t bufferlen, bool copy);
+void jsonpath_iter_begin(jsonpathiter_t *iter, const uint8_t *buffer, size_t bufferlen);
 /**
  * Position the iterator at the next component of the path.  Return true if there is
  * a next.

@@ -10,6 +10,22 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/**** String writing utilities ****/
+typedef enum stringutil_escapemode_t {
+	/**
+	 * Escapes all non ASCII characters and control characters.
+	 */
+	STRINGESCAPE_ASCII=0,
+
+	/**
+	 * Escapes a string that is destined for a UTF-8 safe medium.
+	 * This will escape control characters but will allow non-ascii
+	 * characters through unescaped.
+	 */
+	STRINGESCAPE_UTF8=1
+} stringutil_escapemode_t;
+
+
 /**** stringwriter class ****/
 typedef struct stringwriter_t {
 	uint8_t* string;
@@ -80,6 +96,14 @@ int stringwriter_append_codepoint(stringwriter_t *self, uint32_t codepoint);
 int stringwriter_append_modified_utf8z(stringwriter_t *self, uint8_t* source, size_t bytes);
 
 /**
+ * Writes an escaped JSON string.  This does
+ * not physically write quotes.
+ */
+bool stringwriter_append_jsonescape(stringwriter_t *self, const uint8_t *utf8_string, size_t len,
+		stringutil_escapemode_t escape_mode,
+		bool escape_single_quote, bool escape_double_quote);
+
+/**
  * Reads a zero terminated string that has been encoded with modified UTF-8,
  * converting the 0xc080 escape sequence to nulls, decoding at most maxbytes.
  * Returns 0 on failure or encountering maxbytes without finding a null.
@@ -97,21 +121,6 @@ int stringwriter_slurp_file(stringwriter_t *self, FILE *input_file);
  * The stream only supports sequential output.
  */
 FILE *stringwriter_openfile(stringwriter_t *self);
-
-/**** String writing utilities ****/
-typedef enum stringutil_escapemode_t {
-	/**
-	 * Escapes all non ASCII characters and control characters.
-	 */
-	STRINGESCAPE_ASCII=0,
-
-	/**
-	 * Escapes a string that is destined for a UTF-8 safe medium.
-	 * This will escape control characters but will allow non-ascii
-	 * characters through unescaped.
-	 */
-	STRINGESCAPE_UTF8=1
-} stringutil_escapemode_t;
 
 /**
  * Writes an escaped JSON string to an output FILE.  This does

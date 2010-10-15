@@ -16,7 +16,7 @@ void jsonpath_append(stringwriter_t *buffer, jsonpathtype_t type, uint8_t *utf8s
 	stringwriter_append_byte(buffer, 0);
 }
 
-void jsonpath_iter_begin(jsonpathiter_t *iter, const uint8_t *buffer, size_t bufferlen, bool copy)
+void jsonpath_iter_begin(jsonpathiter_t *iter, const uint8_t *buffer, size_t bufferlen)
 {
 	/* setup the buffer */
 	iter->buffer=buffer;
@@ -46,7 +46,7 @@ bool jsonpath_iter_next(jsonpathiter_t *iter)
 
 	/* get the type byte */
 	type=(jsonpathtype_t)*this_value;
-	if (type<0 || type>=JSONPATHTYPE_MAXVALUE)
+	if (type<0 || type>JSONPATHTYPE_MAXVALUE)
 		return false;	/* if adding more types, extend check */
 	this_value++;
 
@@ -60,6 +60,7 @@ bool jsonpath_iter_next(jsonpathiter_t *iter)
 	iter->current_type=type;
 	iter->current_value=value_start;
 	iter->next_value=this_value;
+	iter->current_value_length=this_value-value_start-1;
 
 	return true;
 }
@@ -123,6 +124,36 @@ bool jsonpath_parse(stringwriter_t *bufferout, uint8_t *utf8stream, size_t strea
 		stringwriter_append_byte(bufferout, 0);
 		return false;
 	}
+	return true;
+}
+
+/*** serializer ***/
+bool jsonpath_serialize(stringwriter_t *textout, jsonpathiter_t *iter)
+{
+	bool first=true;
+
+	while (jsonpath_iter_next(iter)) {
+		switch (iter->current_type) {
+		case JSONPATHTYPE_IDENTIFIER:
+			if (first) first=false;
+			else stringwriter_append_byte(textout, '.');
+			if (!stringwriter_unpack_modified_utf8z(textout, iter->current_value, iter->current_value_length+1)) return false;
+			break;
+		case JSONPATHTYPE_NUMERIC:
+			stringwriter_append_byte(textout, '[');
+			if (!stringwriter_unpack_modified_utf8z(textout, iter->current_value, iter->current_value_length+1)) return false;
+			stringwriter_append_byte(textout, ']');
+			break;
+		case JSONPATHTYPE_STRING:
+			stringwriter_append(textout, "['", 2);
+			if (!stringwriter_append_jsonescape(textout, iter->current_value, iter->current_value_length, STRINGESCAPE_ASCII, true, false)) return false;
+			stringwriter_append(textout, "']", 2);
+			break;
+		default:
+			return false;
+		}
+	}
+
 	return true;
 }
 
