@@ -55,17 +55,19 @@ This project is currently a toy.  Production use would be insane at this junctur
 
 Dependencies
 ------------
-*	autoconf (developed with 2.65 and 2.68)
-*	automake (developed with 1.11)
-*	libtool  (developed with 2.2.6 and 2.4)
-*	flex (developed with 2.5.35)
-*	bison (developed with 2.3 and 2.4.1)
-*	postgresql (developed with 8.4 and 9.0)
+
+* autoconf (developed with 2.65 and 2.68)
+* automake (developed with 1.11)
+* libtool  (developed with 2.2.6 and 2.4)
+* flex (developed with 2.5.35)
+* bison (developed with 2.3 and 2.4.1)
+* postgresql (developed with 8.4 and 9.0)
 
 Compatibility
 -------------
 I have built it on the following
 configurations:
+
 *	Mac OSX Snow Leopard 32bit x86
 *	Ubuntu 10.04 32bit x86 (gcc 4.4.3)
 
@@ -84,6 +86,7 @@ Building
 --------
 The project does not yet install, but it can be run out of the dev tree.  Ensure that the following are on your
 PATH and that you have the PostgreSQL server headers installed (try postgresql-server-8.4-dev and friends on Ubuntu):
+
 *	autoconf
 *	aclocal
 *	automake
@@ -93,6 +96,7 @@ PATH and that you have the PostgreSQL server headers installed (try postgresql-s
 *	pg_config
 
 Then run:
+
 *	./autobootstrap.sh
 *	make
 
@@ -135,6 +139,7 @@ external form).
 	select c::text as json, c::bytea as bytes from testtext;
 
 And the output:
+
 	                 json                 |                                                     native                                                     
 	--------------------------------------+----------------------------------------------------------------------------------------------------------------
 	 nan                                  | \xff000ffff000ffffff

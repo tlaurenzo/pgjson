@@ -6,6 +6,13 @@
 /shared/jsonparser.tab.c
 /shared/jsonparser.yy.c
 
+/pgplugin/pgjson.sql
+
+# autoheader
+/include/stamp-h1
+/include/pgjson_config.h
+/include/pgjson_config.h.in
+
 # All generated makefiles
 /Makefile.in
 /Makefile
@@ -26,15 +33,18 @@
 /configure
 /config.guess
 /autom4te.cache
+/config.log
 /m4/ltoptions.m4
 /m4/ltsugar.m4
 /m4/libtool.m4
 /m4/ltversion.m4
 /m4/lt~obsolete.m4
+.deps
+.libs
 
 # Unversioned binaries
 *.la
 *.lo
 *.so
 *.dylib
-
+*.o
