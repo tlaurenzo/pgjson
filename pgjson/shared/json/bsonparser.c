@@ -32,21 +32,20 @@ bool bsonvalue_load(bsonvalue_t *bsv, uint8_t *source, size_t source_len, bsonva
 	 */
 	if (mode==BSONMODE_ROOT) {
 		/* root */
-		if (source_len>0 && (source[0]&0x80)==0x80) {
+		if (source_len<4) return false;
+		length=BSON_SWAP_BTOH32(READ_INT32(source));
+
+		if (length<0) {
 			/* root literal with inverted tag*/
-			type=bsv->type=-((int8_t)source[0]);
+			type=bsv->type=-length;
 			bsv->label=0;
-			bsv->value_start=source+1;
+			bsv->value_start=source+4;
 			if (type<=0 || type>BSONTYPE_MAX_KNOWN) {
 				/* nope - invalid */
 				return false;
 			}
 		} else {
 			/* root document */
-			if (source_len<4) return false;
-
-			length=BSON_SWAP_BTOH32(READ_INT32(source));
-
 			/* detect a single root document (min length == 5) */
 			if (length>=5) {
 				/* root document - just deal with it all here */

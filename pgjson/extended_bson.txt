@@ -2,32 +2,32 @@ The following grammar extends the one found on bsonspec.org to include
 root value semantics.  Note that the tag type values in rootelement
 are the negated two's complement values of the same type from element.
 Interpretation of the streeam as either a rootelement or document is
-done by checking the first byte.  If its high order bit is set (negative)
+done by checking the first int32.  If its high order bit is set (negative)
 then it is a rootelement.  Otherwise, it is a document.
 
 stream ::= rootelement
          | document
          
 rootelement ::=
-              "\xff" double     /* double literal */
-              "\xfe" string     /* string literal */
-              "\xfd" document   /* as dictionary */
-              "\xfc" document   /* as array */
-              "\xfb" binary
-              "\xfa" 			/* undefined */
-              "\xf9" (byte*12)	/* ObjectId */
-              "\xf8" "\x00"		/* boolean false */
-              "\xf8" "\x01"		/* boolean true */
-              "\xf7" int64		/* UTC datetime */
-              "\xf6"            /* null */
-              "\xf5" cstring cstring /* regular expression */
-              "\xf4" string (byte*12) /* DBPointer */
-              "\xf3" string     /* javascript code */
-              "\xf2" string     /* symbol */
-              "\xf1" code_w_s   /* javascript code with scope */
-              "\xf0" int32      /* 32bit int literal */
-              "\xef" int64      /* timestamp */
-              "\xee" int64      /* 64bit int literal */
+             | "\xffffffff" double     /* double literal */
+             | "\xfeffffff" string     /* string literal */
+             | "\xfdffffff" document   /* as dictionary */
+             | "\xfcffffff" document   /* as array */
+             | "\xfbffffff" binary
+             | "\xfaffffff" 			/* undefined */
+             | "\xf9ffffff" (byte*12)	/* ObjectId */
+             | "\xf8ffffff" "\x00"		/* boolean false */
+             | "\xf8ffffff" "\x01"		/* boolean true */
+             | "\xf7ffffff" int64		/* UTC datetime */
+             | "\xf6ffffff"            /* null */
+             | "\xf5ffffff" cstring cstring /* regular expression */
+             | "\xf4ffffff" string (byte*12) /* DBPointer */
+             | "\xf3ffffff" string     /* javascript code */
+             | "\xf2ffffff" string     /* symbol */
+             | "\xf1ffffff" code_w_s   /* javascript code with scope */
+             | "\xf0ffffff" int32      /* 32bit int literal */
+             | "\xefffffff" int64      /* timestamp */
+             | "\xeeffffff" int64      /* 64bit int literal */
 
 document	::=	int32 e_list "\x00"	BSON Document
 

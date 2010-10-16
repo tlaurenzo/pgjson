@@ -1,14 +1,14 @@
 drop table if exists testbin;
 create table testbin(c jsonbinary);
 
-insert into testbin values (E'\\xff000ffff000ffffff');
-insert into testbin values (E'\\xf6');
-insert into testbin values (E'\\xfa');
-insert into testbin values (E'\\xf800');
-insert into testbin values (E'\\xf801');
-insert into testbin values (E'\\xfe03000000484900');
-insert into testbin values (E'\\xf0cafebabe');
-insert into testbin values (E'\\xeecafebabecafebabe');
+insert into testbin values (E'\\xffffffff000ffff000ffffff');
+insert into testbin values (E'\\xf6ffffff');
+insert into testbin values (E'\\xfaffffff');
+insert into testbin values (E'\\xf8ffffff00');
+insert into testbin values (E'\\xf8ffffff01');
+insert into testbin values (E'\\xfeffffff03000000484900');
+insert into testbin values (E'\\xf0ffffffcafebabe');
+insert into testbin values (E'\\xeeffffffcafebabecafebabe');
 
 insert into testbin values (E'\\x0500000000');
 insert into testbin values ('{first: 1, second: 2, third: [1, 2]}'::varchar);

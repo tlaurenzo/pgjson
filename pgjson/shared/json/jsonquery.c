@@ -12,6 +12,7 @@ char **arg_expressions;
 int  arg_expression_count;
 bool arg_debug=true;
 
+bsonvalue_t bson_value;
 uint8_t *bson_buffer;
 size_t   bson_buffer_len;
 
@@ -48,6 +49,7 @@ int process_expression(char *exprtext)
 		stringwriter_destroy(&exprser);
 	}
 
+	/* evaluate */
 
 	stringwriter_destroy(&exprbin);
 	return 0;
@@ -100,9 +102,18 @@ int process_input()
 		return 3;
 	}
 
-	if (rc==0 && arg_debug) {
-		fprintf(stderr, "Parsed Input:\n");
-		hexdump(stderr, bson_buffer, bson_buffer_len);
+	if (rc==0) {
+		/* dump binary data */
+		if (arg_debug) {
+			fprintf(stderr, "Parsed Input:\n");
+			hexdump(stderr, bson_buffer, bson_buffer_len);
+		}
+
+		/* initialize bson value */
+		if (!bsonvalue_load(&bson_value, bson_buffer, bson_buffer_len, BSONMODE_ROOT)) {
+			fprintf(stderr, "ERROR: bsonvalue_load could not interpret the parsed results\n");
+			rc=5;
+		}
 	}
 
 	return rc;
