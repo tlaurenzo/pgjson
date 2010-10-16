@@ -11,8 +11,8 @@ modification is a special encoding for non-Document root values.  For background
 BSON spec defines a Document as the abstraction for storing both Lists and Dictionaries and only
 allows for a single Document (interpreted as a Dictionary) to be stored as the root element of
 a stream.  This implementation creates a superset of BSON capable of storing arbitrary BSON value
-types at the root by taking advantage of the high order bit of the first byte of the stream.  If the
-high order bit is 1, then the first byte is taken as a negated two's-complement Element Type followed
+types at the root by taking advantage of the high order bit of the first int32 of the stream.  If the
+high order bit is 1, then the first int32 is taken as a negated two's-complement Element Type followed
 directly by the Element value exactly as specified for within a Document.  This hack works because
 the first four bytes of a stream are supposed to be a little-endian signed 32bit integer representing
 the Document length.  Since a length can never be negative, it means that the high-order bit of the stream's
@@ -258,6 +258,85 @@ And the output:
 	(13 rows)
 	
 	
+Extended BSON Grammar
+=====================
+The following grammar extends the one found on bsonspec.org to include
+root value semantics.  Note that the tag type values in rootelement
+are the negated two's complement values of the same type from element.
+Interpretation of the streeam as either a rootelement or document is
+done by checking the first int32.  If its high order bit is set (negative)
+then it is a rootelement.  Otherwise, it is a document.
+
+(Portions adapted from bsonspec.org)
+
+	stream ::= rootelement
+				| document
+				
+	rootelement ::=
+					 | "\xffffffff" double     /* double literal */
+					 | "\xfeffffff" string     /* string literal */
+					 | "\xfdffffff" document   /* as dictionary */
+					 | "\xfcffffff" document   /* as array */
+					 | "\xfbffffff" binary
+					 | "\xfaffffff" 			/* undefined */
+					 | "\xf9ffffff" (byte*12)	/* ObjectId */
+					 | "\xf8ffffff" "\x00"		/* boolean false */
+					 | "\xf8ffffff" "\x01"		/* boolean true */
+					 | "\xf7ffffff" int64		/* UTC datetime */
+					 | "\xf6ffffff"            /* null */
+					 | "\xf5ffffff" cstring cstring /* regular expression */
+					 | "\xf4ffffff" string (byte*12) /* DBPointer */
+					 | "\xf3ffffff" string     /* javascript code */
+					 | "\xf2ffffff" string     /* symbol */
+					 | "\xf1ffffff" code_w_s   /* javascript code with scope */
+					 | "\xf0ffffff" int32      /* 32bit int literal */
+					 | "\xefffffff" int64      /* timestamp */
+					 | "\xeeffffff" int64      /* 64bit int literal */
+	
+	document	::=	int32 e_list "\x00"	   /* BSON Document */
+	
+	e_list	::=	element e_list	         /* Sequence of elements */
+			|	""	
+	
+	element	::=	"\x01" e_name double	   /* Floating point */
+			|	"\x02" e_name string	         /* UTF-8 string */
+			|	"\x03" e_name document	      /* Embedded document */
+			|	"\x04" e_name document	      /* Array */
+			|	"\x05" e_name binary	         /* Binary data */
+			|	"\x06" e_name	               /* Undefined */
+			|	"\x07" e_name (byte*12)	      /* ObjectId */
+			|	"\x08" e_name "\x00"	         /* Boolean "false" */
+			|	"\x08" e_name "\x01"	         /* Boolean "true" */
+			|	"\x09" e_name int64	         /* UTC datetime */
+			|	"\x0A" e_name	               /* Null value */
+			|	"\x0B" e_name cstring cstring	/* Regular expression */
+			|	"\x0C" e_name string (byte*12)	/* DBPointer Ñ Deprecated */
+			|	"\x0D" e_name string	            /* JavaScript code */
+			|	"\x0E" e_name string	            /* Symbol */
+			|	"\x0F" e_name code_w_s	         /* JavaScript code w/ scope */
+			|	"\x10" e_name int32	         /* 32-bit Integer */
+			|	"\x11" e_name int64	         /* Timestamp */
+			|	"\x12" e_name int64	         /* 64-bit integer */
+			|	"\xFF" e_name	               /* Min key */
+			|	"\x7F" e_name	               /* Max key */
+	
+	e_name	::=	cstring	               /* Key name */
+	
+	string	::=	int32 (byte*) "\x00"	   /* String */
+	
+	cstring	::=	(byte*) "\x00"	         /* C String */
+	
+	binary	::=	int32 subtype (byte*)	/* Binary */
+	
+	subtype	::=	"\x00"	               /* Binary / Generic */
+			|	"\x01"	                     /* Function */
+			|	"\x02"	                     /* Binary (Old) */
+			|	"\x03"	                     /* UUID *
+			|	"\x05"	                     /* MD5 */
+			|	"\x80"	                     /* User defined */
+	
+	code_w_s	::=	int32 string document	/* Code w/ scope */
+					
 	
 License and Copyright
 =====================
