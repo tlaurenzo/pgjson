@@ -11,7 +11,7 @@ FILE *arg_output;
 char  arg_input_format;  /* 'J' or 'B' */
 char **arg_expressions;
 int  arg_expression_count;
-bool arg_debug=true;
+bool arg_debug=false;
 
 bsonvalue_t bson_value;
 uint8_t *bson_buffer;
@@ -151,7 +151,7 @@ char parse_format(char *fmt)
 
 void print_syntax()
 {
-	fprintf(stderr, "syntax: jsonquery [-it json|bson] [-e expression] [input file]\n");
+	fprintf(stderr, "syntax: jsonquery [-it json|bson] [-e expression] [-debug] [input file]\n");
 }
 
 int main(int argc, char **argv)
@@ -191,6 +191,8 @@ int main(int argc, char **argv)
 				return 1;
 			}
 			arg_expressions[arg_expression_count++]=*argv;
+		} else if (strcmp(*argv, "-debug")==0) {
+			arg_debug=true;
 		} else if (*argv[0]!='-') {
 			if (arg_input!=stdin) {
 				fprintf(stderr, "Multiple input files specified\n");
