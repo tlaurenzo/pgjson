@@ -148,9 +148,9 @@ bool jsonpath_serialize(stringwriter_t *textout, jsonpathiter_t *iter)
 			stringwriter_append_byte(textout, ']');
 			break;
 		case JSONPATHTYPE_STRING:
-			stringwriter_append(textout, "['", 2);
-			if (!stringwriter_append_jsonescape(textout, iter->current_value, iter->current_value_length, STRINGESCAPE_ASCII, true, false)) return false;
-			stringwriter_append(textout, "']", 2);
+			stringwriter_append(textout, "[\"", 2);
+			if (!stringwriter_append_jsonescape(textout, iter->current_value, iter->current_value_length, STRINGESCAPE_ASCII, true, true)) return false;
+			stringwriter_append(textout, "\"]", 2);
 			break;
 		default:
 			return false;
