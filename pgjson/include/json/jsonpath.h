@@ -125,7 +125,7 @@ typedef struct {
 /**
  * Parse the given text representation into a binary representation, written to buffer.
  * Return true on successful parse.  If unsuccessful parse, then false is returned
- * and the bufferout contains the error message.
+ * and the bufferout contains the error message (zero terminated).
  */
 bool jsonpath_parse(stringwriter_t *bufferout, uint8_t *utf8stream, size_t streamlen);
 

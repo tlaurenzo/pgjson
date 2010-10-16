@@ -2,6 +2,7 @@ SET client_min_messages TO warning;
 
 BEGIN;
 
+   
 /*** jsonbinary datatype ***/
 DROP TYPE IF EXISTS jsonbinary CASCADE;
 CREATE TYPE jsonbinary;
@@ -121,6 +122,30 @@ CREATE CAST (bytea as json)
    WITHOUT FUNCTION
    AS IMPLICIT;
 
+/*** jsonpath datatype ***/
+DROP TYPE IF EXISTS jsonpath CASCADE;
+CREATE TYPE jsonpath;
+
+CREATE OR REPLACE FUNCTION jsonpath_in(cstring)
+   RETURNS jsonpath
+   AS 'MODULE_PATHNAME', 'pgjson_jsonpath_in'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION jsonpath_out(jsonpath)
+   RETURNS cstring
+   AS 'MODULE_PATHNAME', 'pgjson_jsonpath_out'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+
+CREATE TYPE jsonpath (
+   internallength = variable,
+   alignment = int4,
+   storage = main,
+   input = jsonpath_in,
+   output = jsonpath_out
+);
+
+CREATE CAST (jsonpath AS bytea)
+   WITHOUT FUNCTION;
+   
    
 COMMIT;
 

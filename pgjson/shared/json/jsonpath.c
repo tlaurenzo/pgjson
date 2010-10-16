@@ -4,7 +4,9 @@
 void jsonpath_append(stringwriter_t *buffer, jsonpathtype_t type, uint8_t *utf8string, size_t stringlen)
 {
 	/* remove terminating null if present */
-	if (buffer->pos && buffer->string[buffer->pos]==0) buffer->pos--;
+	if (buffer->pos && buffer->string[buffer->pos-1]==0) {
+		buffer->pos--;
+	}
 
 	/* add type */
 	stringwriter_append_byte(buffer, (uint8_t)type);

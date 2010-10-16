@@ -10,6 +10,7 @@ libpgjson_la_LIBADD = ../shared/libjson.la
 libpgjson_la_SOURCES = \
 	pgjson.c \
 	jsonbinary.c \
+	pgjsonpath.c \
 	pgutil.c
 
 $(MODULE_NAME): libpgjson.la
