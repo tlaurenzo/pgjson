@@ -4,6 +4,7 @@
 #include "json/bsonparser.h"
 #include "json/bsonserializer.h"
 #include "json/jsonpath.h"
+#include "json/jsonoutputter.h"
 
 FILE *arg_input;
 FILE *arg_output;
@@ -16,11 +17,26 @@ bsonvalue_t bson_value;
 uint8_t *bson_buffer;
 size_t   bson_buffer_len;
 
+int report_result(bsonvalue_t *value)
+{
+	jsonoutputter_t outputter;
+
+	jsonoutputter_open_json_file(&outputter, arg_output);
+	bsonvalue_visit(value, jsonoutputter_getvisitor(&outputter));
+	jsonoutputter_close(&outputter);
+
+	fprintf(arg_output, "\n");
+
+	return 0;
+}
+
 int process_expression(char *exprtext)
 {
+	int rc=0;
 	stringwriter_t exprbin;
 	stringwriter_t exprser;
 	jsonpathiter_t iter;
+	bsonvalue_t bson_result;
 
 	if (arg_debug) fprintf(stderr, "Parsing expression: %s\n", exprtext);
 
@@ -50,9 +66,16 @@ int process_expression(char *exprtext)
 	}
 
 	/* evaluate */
+	jsonpath_iter_begin(&iter, exprbin.string, exprbin.pos);
+	if (!jsonpath_evaluate(&bson_value, &iter, &bson_result)) {
+		fprintf(stderr, "ERROR: Could not evaluate\n");
+		rc=6;
+	} else {
+		rc=report_result(&bson_result);
+	}
 
 	stringwriter_destroy(&exprbin);
-	return 0;
+	return rc;
 }
 
 int process_input_json()

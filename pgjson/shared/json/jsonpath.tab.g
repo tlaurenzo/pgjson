@@ -19,6 +19,7 @@
 %token <stringval> STRING
 %token <stringval> IDENTIFIER
 %token <stringval> NUMERIC
+%token <stringval> LENGTH
 %token LBRACKET
 %token RBRACKET
 %token DOT
@@ -59,6 +60,7 @@ pathtail
       
 pathitem
       : IDENTIFIER   { jsonpath_append(context->bufferout, JSONPATHTYPE_IDENTIFIER, $1.bytes, $1.length); }
+      | LENGTH       { jsonpath_append(context->bufferout, JSONPATHTYPE_LENGTH, $1.bytes, $1.length); }
       | bracketitem
       ;
      

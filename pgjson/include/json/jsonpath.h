@@ -53,9 +53,11 @@ typedef enum {
 	JSONPATHTYPE_IDENTIFIER=1,
 	JSONPATHTYPE_STRING=2,
 	JSONPATHTYPE_NUMERIC=3,
+	/* refers to the special "length" property of some types.  otherwise, treated as identifier */
+	JSONPATHTYPE_LENGTH=4,
 
 	/* for range checks */
-	JSONPATHTYPE_MAXVALUE=3
+	JSONPATHTYPE_MAXVALUE=4
 } jsonpathtype_t;
 
 typedef struct {

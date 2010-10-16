@@ -37,6 +37,7 @@ static inline uint32_t convert_uni_escape(char *t)
 %%
 "["		{ return LBRACKET; }
 "]" 		{ return RBRACKET; }
+"length" { yylval->stringval.length=yyleng; yylval->stringval.bytes=yytext; return LENGTH; }
 "."      { return DOT; }
 
 	/* Strings */

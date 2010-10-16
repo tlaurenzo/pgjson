@@ -13,6 +13,11 @@
 #define READ_INT64(ptr) \
 	*((int64_t*)(ptr))
 
+/* forward defines */
+static bool visit_value(jsonvisitor_t *visitor, bsonvalue_t *bsv, stringwriter_t *scratch);
+static bool visit_document(jsonvisitor_t *visitor, bsonvalue_t *bsv, stringwriter_t *scratch);
+static bool visit_array(jsonvisitor_t *visitor, bsonvalue_t *bsv, stringwriter_t *scratch);
+
 
 bool bsonvalue_load(bsonvalue_t *bsv, uint8_t *source, size_t source_len, bsonvalue_mode_t mode)
 {
@@ -207,11 +212,28 @@ bool bsonvalue_next(bsonvalue_t *bsv)
 	return rc;
 }
 
+bool bsonvalue_load_firstchild(bsonvalue_t *document, bsonvalue_t *child)
+{
+	if (document->type!=BSONTYPE_DOCUMENT && document->type!=BSONTYPE_ARRAY) {
+		return false;
+	}
 
-/* forward defines */
-static bool visit_value(jsonvisitor_t *visitor, bsonvalue_t *bsv, stringwriter_t *scratch);
-static bool visit_document(jsonvisitor_t *visitor, bsonvalue_t *bsv, stringwriter_t *scratch);
-static bool visit_array(jsonvisitor_t *visitor, bsonvalue_t *bsv, stringwriter_t *scratch);
+	return bsonvalue_load(child, document->value.document.docstart, document->value.document.docsize, BSONMODE_ELEMENT);
+}
+
+bool bsonvalue_visit(bsonvalue_t *bsv, jsonvisitor_t *visitor)
+{
+	stringwriter_t scratch;
+	bool rc;
+
+	stringwriter_init(&scratch, 256);
+	rc=visit_value(visitor, bsv, &scratch);
+	stringwriter_destroy(&scratch);
+
+	return rc;
+}
+
+
 
 int32_t bsonparser_parse(uint8_t *buffer, size_t len, jsonvisitor_t *visitor)
 {

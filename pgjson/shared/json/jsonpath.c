@@ -134,6 +134,7 @@ bool jsonpath_serialize(stringwriter_t *textout, jsonpathiter_t *iter)
 
 	while (jsonpath_iter_next(iter)) {
 		switch (iter->current_type) {
+		case JSONPATHTYPE_LENGTH:
 		case JSONPATHTYPE_IDENTIFIER:
 			if (first) first=false;
 			else stringwriter_append_byte(textout, '.');
@@ -154,6 +155,86 @@ bool jsonpath_serialize(stringwriter_t *textout, jsonpathiter_t *iter)
 		}
 	}
 
+	return true;
+}
+
+/* evaluate */
+int32_t calculate_array_length(bsonvalue_t *array)
+{
+	int32_t maxindex=-1;
+	long val;
+	char *ptr;
+
+	bsonvalue_t child;
+	if (!bsonvalue_load_firstchild(array, &child)) return 0;
+	do {
+		if (child.type==0 || child.label==0) break;
+
+		val=strtol(child.label, &ptr, 10);
+		if (ptr!=child.label && !*ptr) {
+			if (maxindex<val) maxindex=val;
+		}
+	} while (bsonvalue_next(&child));
+
+	return maxindex+1;
+}
+
+bool jsonpath_evaluate(bsonvalue_t *root, jsonpathiter_t *iter, bsonvalue_t *resultout)
+{
+	int32_t length;
+	bsonvalue_t current=*root;
+	bsonvalue_t child;
+	const uint8_t *cmpname;
+	bool found;
+
+	while (jsonpath_iter_next(iter)) {
+		if (iter->current_type==JSONPATHTYPE_LENGTH) {
+			/* do special processing for length query for array, string/symbol and binary */
+			if (current.type==BSONTYPE_ARRAY) {
+				length=calculate_array_length(&current);
+				current.type=BSONTYPE_INT32;
+				current.value.int32_value=length;
+				continue;
+			} else if (current.type==BSONTYPE_STRING||current.type==BSONTYPE_SYMBOL) {
+				length=current.value.string.length-1;
+				current.type=BSONTYPE_INT32;
+				current.value.int32_value=length;
+				continue;
+			} else if (current.type==BSONTYPE_BINARY) {
+				length=current.value.binary.length;
+				current.type=BSONTYPE_INT32;
+				current.value.int32_value=length;
+				continue;
+			}
+			/* If we fall through, then just treat length as a normal field */
+		}
+
+		/* if its a document or array, descend.  otherwise, bail with undefined */
+		if (current.type==BSONTYPE_DOCUMENT || current.type==BSONTYPE_ARRAY) {
+			if (bsonvalue_load_firstchild(&current, &child)) {
+				cmpname=iter->current_value;
+				found=false;
+
+				do {
+					if (child.type==0 || child.label==0) break;
+					if (strcmp(child.label, cmpname)==0) {
+						/* its a match */
+						current=child;
+						found=true;
+						break;	/* really want a labelled continue to outer loop */
+					}
+				} while (bsonvalue_next(&child));
+
+				if (found) continue;
+			}
+		}
+
+		/* would have continued before now on success */
+		current.type=BSONTYPE_UNDEFINED;
+		break;
+	}
+
+	*resultout=current;
 	return true;
 }
 

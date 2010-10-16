@@ -196,6 +196,17 @@ bool bsonvalue_load(bsonvalue_t *bsv, uint8_t *source, size_t source_len, bsonva
 bool bsonvalue_next(bsonvalue_t *bsv);
 
 /**
+ * Loads a new bsonvalue for the first child of a document value.  Returns true on success
+ * and false if bsonvalue_load fails or the document is not of the correct type.
+ */
+bool bsonvalue_load_firstchild(bsonvalue_t *document, bsonvalue_t *child);
+
+/**
+ * Generate json visitor events off of the given bsonvalue
+ */
+bool bsonvalue_visit(bsonvalue_t *bsv, jsonvisitor_t *visitor);
+
+/**
  * Parse a given buffer, generating visitor events
  */
 int32_t bsonparser_parse(uint8_t *buffer, size_t len, jsonvisitor_t *visitor);
