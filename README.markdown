@@ -105,6 +105,92 @@ pgplugin/pgjson.sql.  Note that this script is intended for use against a DEV da
 reference to the absolute location of the shared library in the dev tree and uses DROP...CASCADE constructs
 that can trash any real database.
 
+PostgreSQL Types
+-------------------------------------
+The following types are defined:
+
+* json - The core type.  Internally represented as an extended BSON stream.
+  Externally represented as JSON text with format flags that ensure roundtripping
+  of non-native JSON types.  This type can hold any legal BSON stream, which practically
+  means that it can hold any value legal in JSON plus a handful of other types (
+  binary, date, etc).  The conversion functions tend to no raise errors but
+  returning an "undefined" json value.
+* jsonbinary - Same as json except that the external representation defaults to
+  the internal representation (BSON stream).  This type is binary compatible with
+  json.
+* jsonpath - Represents a JSON evaluation path for referencing a part of a JSON
+  document.  Think of this as a compiled JavaScript expression.
+  
+Casts
+=====
+json/jsonbinary types can be cast to and from the following types at will:
+
+* bytea - currently returns the internal form
+* varchar
+* text
+
+Casting will be reworked so that it is not a shortcut for accessing the internal
+form but acts like the JavaScript constructors for the primitive types, allowing
+casting between the JSON variant and concrete postgres types.
+
+Operators
+=========
+The "->" operator is an alias for the jsoneval(json,jsonpath) function, allowing
+selection of json members with a dereferncing-like syntax.  For exmaple, assume
+the following table:
+
+	create table users (id bigserial, data json);
+	insert into users (data) values ('{
+		first_name: "Terry",
+		last_name: "Laurenzo",
+		email: {
+			"work": "someone@bigcompany.com",
+			"personal": "justanyone@aol.com" 
+		}
+	}');
+	insert into users (data) values ('{
+		first_name: "Joe",
+		last_name: "Schmoe",
+		email: {
+			"work": "joe@shcmoeswidgets.com",
+			"personal": "joe@aol.com" 
+		}
+	}');
+
+In order to access properties of the data, do something like this:
+
+	# select id, data -> 'first_name' as "First Name", data -> 'last_name' as "Last Name" from users;
+	 id | First Name | Last Name  
+	----+------------+------------
+	  1 | "Terry"    | "Laurenzo"
+	  2 | "Joe"      | "Schmoe"
+	(2 rows)
+
+Note that the values being returned are json objects (representing strings).  It would be
+more valuable to cast these to a known internal type.
+
+You can also create a flattened view:
+
+	create view users_flat as
+		select
+				id,
+				data -> 'first_name' as "First Name", 
+				data -> 'last_name' as "Last Name",
+				data -> 'email.work' as "Work Email",
+				data -> 'email.personal' as "Personal Email"
+		from users;
+
+And run queries against it:
+		
+	# select * from users_flat;
+	 id | First Name | Last Name  |        Work Email        |    Personal Email    
+	----+------------+------------+--------------------------+----------------------
+	  1 | "Terry"    | "Laurenzo" | "someone@bigcompany.com" | "justanyone@aol.com"
+	  2 | "Joe"      | "Schmoe"   | "joe@shcmoeswidgets.com" | "joe@aol.com"
+	(2 rows)
+
+		
+	
 Example
 -------
 Here is a stupid example that exercises the json and jsonbinary datatypes (these types differ in that json

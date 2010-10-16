@@ -32,3 +32,36 @@ select ('{a:{embed:"document"},b:2}'::json -> 'a');
 select c -> 'third[1]' from testtext;
 select c -> 'third[1]' from testbin;
 
+drop table if exists users;
+create table users (id bigserial, data json);
+insert into users (data) values ('{
+	first_name: "Terry",
+	last_name: "Laurenzo",
+	email: {
+		"work": "someone@bigcompany.com",
+		"personal": "justanyone@aol.com" 
+	}
+}');
+insert into users (data) values ('{
+	first_name: "Joe",
+	last_name: "Schmoe",
+	email: {
+		"work": "joe@shcmoeswidgets.com",
+		"personal": "joe@aol.com" 
+	}
+}');
+
+select id, data -> 'first_name' as "First Name", data -> 'last_name' as "Last Name" from users;
+
+drop view if exists users_flat;
+create view users_flat as
+   select
+         id,
+         data -> 'first_name' as "First Name", 
+         data -> 'last_name' as "Last Name",
+         data -> 'email.work' as "Work Email",
+         data -> 'email.personal' as "Personal Email"
+   from users;
+   
+select * from users_flat;
+
