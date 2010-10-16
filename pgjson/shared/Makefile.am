@@ -16,7 +16,8 @@ libjson_la_SOURCES = \
    json/bsonserializer.c \
    json/jsonoutputter.c \
    json/bsonparser.c \
-   json/jsonpath.c
+   json/jsonpath.c \
+   json/bsonliteral.c
    
 # Lex and yacc rules
 jsonparser.tab.c: json/jsonparser.tab.g

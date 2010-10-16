@@ -1,9 +1,14 @@
+/**
+ * jsonbinary.c
+ * Implementation of the json and jsonbinary datatypes
+ */
 #include "pgjson.h"
 
 #include "util/setup.h"
 #include "json/bsonparser.h"
 #include "json/jsonoutputter.h"
 #include "json/jsonparser.h"
+#include "json/bsonliteral.h"
 
 #include "pgutil.h"
 
@@ -26,6 +31,38 @@ static inline Datum return_outputter_vardata(jsonoutputter_t *outputter)
 	memcpy(VARDATA(textdata), buffer, buffer_len);
 
 	PG_RETURN_POINTER(textdata);
+}
+
+/**
+ * Allocates a vardata structure and returns Datum for the undefined value
+ */
+static inline Datum return_undefined_value()
+{
+	void *binarydata;
+
+	binarydata=palloc(sizeof(BSONLITERAL_UNDEFINED) + VARHDRSZ);
+	SET_VARSIZE(binarydata, sizeof(BSONLITERAL_UNDEFINED)+VARHDRSZ);
+	memcpy(VARDATA(binarydata), BSONLITERAL_UNDEFINED, sizeof(BSONLITERAL_UNDEFINED));
+
+	PG_RETURN_POINTER(binarydata);
+}
+
+/**
+ * Returns an "undefined" string as a cstring
+ */
+static inline Datum return_undefined_cstring()
+{
+	char *retval=palloc(10);
+	strcpy(retval, "undefined");
+	PG_RETURN_CSTRING(retval);
+}
+
+static inline Datum return_undefined_text()
+{
+	void *textdata=palloc(10+VARHDRSZ);
+	SET_VARSIZE(textdata, 9+VARHDRSZ);
+	strcpy(VARDATA(textdata), "undefined");
+	PG_RETURN_TEXT_P(textdata);
 }
 
 /**
@@ -73,8 +110,8 @@ static Datum parse_bson_to_json_as_vardata(void *binarydata, size_t binarysize, 
 
 	jsonoutputter_close(&outputter);
 
-	return retval;
-
+	if (!retval) return return_undefined_text();
+	else return retval;
 }
 
 /**
@@ -130,7 +167,8 @@ static Datum parse_bson_to_json_as_cstring(void *binarydata, size_t binarysize, 
 
 	jsonoutputter_close(&outputter);
 
-	return retval;
+	if (!retval) return return_undefined_cstring();
+	else return retval;
 }
 
 /**
@@ -175,7 +213,8 @@ static Datum parse_json_to_bson_as_vardata(void *textdata, size_t textsize, bool
 	jsonparser_destroy(&parser);
 	jsonoutputter_close(&outputter);
 
-	return retval;
+	if (!retval) return return_undefined_value();
+	else return retval;
 }
 
 /**** Text and Binary BSON IO ****/
@@ -249,10 +288,7 @@ Datum
 pgjson_jsontext_out(PG_FUNCTION_ARGS)
 {
 	void *binarydata=PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(0));
-	Datum retval=parse_bson_to_json_as_cstring(VARDATA_ANY(binarydata), VARSIZE_ANY_EXHDR(binarydata), false);
-	if (!retval) PG_RETURN_NULL();
-	else return retval;
-
+	return parse_bson_to_json_as_cstring(VARDATA_ANY(binarydata), VARSIZE_ANY_EXHDR(binarydata), false);
 }
 
 /* recv binary data returning type.  since the binary representation
@@ -291,9 +327,7 @@ Datum
 pgjson_jsonbinary_to_text(PG_FUNCTION_ARGS)
 {
 	void *vardata=PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(0));
-	Datum retval=parse_bson_to_json_as_vardata(VARDATA_ANY(vardata), VARSIZE_ANY_EXHDR(vardata), false);
-	if (!retval) PG_RETURN_NULL();
-	else return retval;
+	return parse_bson_to_json_as_vardata(VARDATA_ANY(vardata), VARSIZE_ANY_EXHDR(vardata), false);
 }
 
 /*

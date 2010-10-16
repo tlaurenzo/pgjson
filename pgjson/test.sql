@@ -1,6 +1,7 @@
 drop table if exists testbin;
 create table testbin(c jsonbinary);
 
+insert into testbin values (E'\\xcafebabe');
 insert into testbin values (E'\\xffffffff000ffff000ffffff');
 insert into testbin values (E'\\xf6ffffff');
 insert into testbin values (E'\\xfaffffff');
