@@ -26,3 +26,9 @@ insert into testtext values ('{first: [1, 2]}');
 
 select c::text as json, c::bytea as bytes from testtext;
 
+select ('{a:1,b:2}'::json -> 'a');
+select ('{a:{embed:"document"},b:2}'::json -> 'a');
+
+select c -> 'third[1]' from testtext;
+select c -> 'third[1]' from testbin;
+

@@ -17,3 +17,17 @@
 	} while (0);
 
 
+/*** support functions ***/
+/**
+ * Allocates a vardata structure and returns Datum for the undefined value
+ */
+Datum pgjson_return_undefined_value();
+
+/**
+ * Returns an "undefined" string as a cstring
+ */
+Datum pgjson_return_undefined_cstring();
+
+
+Datum pgjson_return_undefined_text();
+

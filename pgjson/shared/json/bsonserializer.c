@@ -83,20 +83,28 @@ static bool introduce_element(jsonvisitor_t *self, bsontype_t value_type)
 	char curdoc_type=curdoc->type;
 	char numeric_index[16];
 	int numeric_index_len;
+	int32_t inverted_tag;
 
 	/* Write the type byte */
-	stringwriter_append_byte(&SELF->buffer, value_type);
 	if (curdoc_type=='A') {
+		stringwriter_append_byte(&SELF->buffer, value_type);
 		/* Generate a numeric index */
 		numeric_index_len=sprintf(numeric_index, "%d", curdoc->member_count);
 		stringwriter_append(&SELF->buffer, numeric_index, numeric_index_len+1);
 	} else if (curdoc_type=='O') {
+		stringwriter_append_byte(&SELF->buffer, value_type);
 		/* Dump the label lookaside as modified UTF-8 */
 		stringwriter_append_modified_utf8z(&SELF->buffer,
 				SELF->label_lookaside.bytes,
 				SELF->label_lookaside.length);
+	} else if (curdoc_type=='X' && curdoc->member_count==0) {
+		/* add value as root */
+		/* write an inverted tag */
+		inverted_tag=-((int32_t)value_type);
+		inverted_tag=BSON_SWAP_HTOB32(inverted_tag);
+		stringwriter_append(&SELF->buffer, &inverted_tag, sizeof(int32_t));
 	} else {
-		/* Attempt to add value at root */
+		/* state to introduce value */
 		SELF->has_error=true;
 		SELF->error_msg=MSG_ILLEGAL_SEQUENCE;
 		return false;

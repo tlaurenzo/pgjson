@@ -11,6 +11,7 @@ libpgjson_la_SOURCES = \
 	pgjson.c \
 	jsontype.c \
 	jsonpathtype.c \
+	jsonevalfunctions.c \
 	pgutil.c
 
 $(MODULE_NAME): libpgjson.la

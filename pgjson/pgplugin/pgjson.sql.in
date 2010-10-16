@@ -146,6 +146,16 @@ CREATE TYPE jsonpath (
 CREATE CAST (jsonpath AS bytea)
    WITHOUT FUNCTION;
    
+/*** evaluation and type cast functions ***/
+CREATE OR REPLACE FUNCTION jsoneval(json, jsonpath)
+   RETURNS json
+   AS 'MODULE_PATHNAME', 'pgjson_jsonpath_eval'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+CREATE OPERATOR -> (
+   PROCEDURE = jsoneval,
+   LEFTARG = json,
+   RIGHTARG = jsonpath
+);
    
 COMMIT;
 

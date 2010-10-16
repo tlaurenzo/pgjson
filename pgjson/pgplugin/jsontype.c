@@ -33,37 +33,6 @@ static inline Datum return_outputter_vardata(jsonoutputter_t *outputter)
 	PG_RETURN_POINTER(textdata);
 }
 
-/**
- * Allocates a vardata structure and returns Datum for the undefined value
- */
-static inline Datum return_undefined_value()
-{
-	void *binarydata;
-
-	binarydata=palloc(sizeof(BSONLITERAL_UNDEFINED) + VARHDRSZ);
-	SET_VARSIZE(binarydata, sizeof(BSONLITERAL_UNDEFINED)+VARHDRSZ);
-	memcpy(VARDATA(binarydata), BSONLITERAL_UNDEFINED, sizeof(BSONLITERAL_UNDEFINED));
-
-	PG_RETURN_POINTER(binarydata);
-}
-
-/**
- * Returns an "undefined" string as a cstring
- */
-static inline Datum return_undefined_cstring()
-{
-	char *retval=palloc(10);
-	strcpy(retval, "undefined");
-	PG_RETURN_CSTRING(retval);
-}
-
-static inline Datum return_undefined_text()
-{
-	void *textdata=palloc(10+VARHDRSZ);
-	SET_VARSIZE(textdata, 9+VARHDRSZ);
-	strcpy(VARDATA(textdata), "undefined");
-	PG_RETURN_TEXT_P(textdata);
-}
 
 /**
  * convert a bson input buffer to json text and return it as a variable length
@@ -110,7 +79,7 @@ static Datum parse_bson_to_json_as_vardata(void *binarydata, size_t binarysize, 
 
 	jsonoutputter_close(&outputter);
 
-	if (!retval) return return_undefined_text();
+	if (!retval) return pgjson_return_undefined_text();
 	else return retval;
 }
 
@@ -167,7 +136,7 @@ static Datum parse_bson_to_json_as_cstring(void *binarydata, size_t binarysize, 
 
 	jsonoutputter_close(&outputter);
 
-	if (!retval) return return_undefined_cstring();
+	if (!retval) return pgjson_return_undefined_cstring();
 	else return retval;
 }
 
@@ -213,7 +182,7 @@ static Datum parse_json_to_bson_as_vardata(void *textdata, size_t textsize, bool
 	jsonparser_destroy(&parser);
 	jsonoutputter_close(&outputter);
 
-	if (!retval) return return_undefined_value();
+	if (!retval) return pgjson_return_undefined_value();
 	else return retval;
 }
 

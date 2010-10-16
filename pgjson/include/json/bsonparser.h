@@ -191,6 +191,12 @@ typedef enum {
 bool bsonvalue_load(bsonvalue_t *bsv, uint8_t *source, size_t source_len, bsonvalue_mode_t mode);
 
 /**
+ * Detaches the bsonvalue by zeroing all pointers.  Call this
+ * function if storing a synthetic value.
+ */
+void bsonvalue_detach(bsonvalue_t *bsv);
+
+/**
  * Seeks to the next value in the buffer, returning false if no more or invalid.
  */
 bool bsonvalue_next(bsonvalue_t *bsv);

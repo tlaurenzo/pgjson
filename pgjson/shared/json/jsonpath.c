@@ -194,16 +194,19 @@ bool jsonpath_evaluate(bsonvalue_t *root, jsonpathiter_t *iter, bsonvalue_t *res
 			/* do special processing for length query for array, string/symbol and binary */
 			if (current.type==BSONTYPE_ARRAY) {
 				length=calculate_array_length(&current);
+				bsonvalue_detach(&current);
 				current.type=BSONTYPE_INT32;
 				current.value.int32_value=length;
 				continue;
 			} else if (current.type==BSONTYPE_STRING||current.type==BSONTYPE_SYMBOL) {
 				length=current.value.string.length-1;
+				bsonvalue_detach(&current);
 				current.type=BSONTYPE_INT32;
 				current.value.int32_value=length;
 				continue;
 			} else if (current.type==BSONTYPE_BINARY) {
 				length=current.value.binary.length;
+				bsonvalue_detach(&current);
 				current.type=BSONTYPE_INT32;
 				current.value.int32_value=length;
 				continue;
@@ -232,6 +235,7 @@ bool jsonpath_evaluate(bsonvalue_t *root, jsonpathiter_t *iter, bsonvalue_t *res
 		}
 
 		/* would have continued before now on success */
+		bsonvalue_detach(&current);
 		current.type=BSONTYPE_UNDEFINED;
 		break;
 	}

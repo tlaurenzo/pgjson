@@ -204,6 +204,14 @@ bool bsonvalue_load(bsonvalue_t *bsv, uint8_t *source, size_t source_len, bsonva
 	return true;
 }
 
+void bsonvalue_detach(bsonvalue_t *bsv)
+{
+	bsv->value_start=0;
+	bsv->value_next=0;
+	bsv->remaining=0;
+	bsv->label=0;
+}
+
 bool bsonvalue_next(bsonvalue_t *bsv)
 {
 	bool rc;
