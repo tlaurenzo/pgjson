@@ -140,36 +140,36 @@ external form).
 
 And the output:
 
-	                 json                 |                                                     native                                                     
+						  json                 |                                                     native                                                     
 	--------------------------------------+----------------------------------------------------------------------------------------------------------------
-	 nan                                  | \xff000ffff000ffffff
-	 null                                 | \xf6
-	 undefined                            | \xfa
-	 false                                | \xf800
-	 true                                 | \xf801
-	 "HI"                                 | \xfe03000000484900
-	 -1095041334                          | \xf0cafebabe
-	 -4703166714098286902                 | \xeecafebabecafebabe
+	 nan                                  | \xffffffff000ffff000ffffff
+	 null                                 | \xf6ffffff
+	 undefined                            | \xfaffffff
+	 false                                | \xf8ffffff00
+	 true                                 | \xf8ffffff01
+	 "HI"                                 | \xfeffffff03000000484900
+	 -1095041334                          | \xf0ffffffcafebabe
+	 -4703166714098286902                 | \xeeffffffcafebabecafebabe
 	 {}                                   | \x0500000000
 	 {"first":1,"second":2,"third":[1,2]} | \x360000001066697273740001000000107365636f6e640002000000047468697264001300000010300001000000103100020000000000
 	(10 rows)
 	
-	                 json                 |                                                     bytes                                                      
+						  json                 |                                                     bytes                                                      
 	--------------------------------------+----------------------------------------------------------------------------------------------------------------
-	 nan                                  | \xff000ffff000ffffff
-	 null                                 | \xf6
-	 undefined                            | \xfa
-	 false                                | \xf800
-	 true                                 | \xf801
-	 "HI"                                 | \xfe03000000484900
-	 -1095041334                          | \xf0cafebabe
-	 -4703166714098286902                 | \xeecafebabecafebabe
+	 nan                                  | \xffffffff000ffff000ffffff
+	 null                                 | \xf6ffffff
+	 undefined                            | \xfaffffff
+	 false                                | \xf8ffffff00
+	 true                                 | \xf8ffffff01
+	 "HI"                                 | \xfeffffff03000000484900
+	 -1095041334                          | \xf0ffffffcafebabe
+	 -4703166714098286902                 | \xeeffffffcafebabecafebabe
 	 {}                                   | \x0500000000
 	 {"first":1,"second":2,"third":[1,2]} | \x360000001066697273740001000000107365636f6e640002000000047468697264001300000010300001000000103100020000000000
 	 {}                                   | \x0500000000
 	 {"first":1,"second":2,"third":[1,2]} | \x360000001066697273740001000000107365636f6e640002000000047468697264001300000010300001000000103100020000000000
 	 {"first":[1,2]}                      | \x1f000000046669727374001300000010300001000000103100020000000000
-	(13 rows)	
+	(13 rows)
 	
 	
 	
