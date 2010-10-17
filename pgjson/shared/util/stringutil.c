@@ -80,50 +80,53 @@ void stringwriter_clear(stringwriter_t *self)
 	self->pos=0;
 }
 
-bool stringwriter_allocate(stringwriter_t *self, size_t requested_capacity)
-{
-   size_t  new_capacity;
-   uint8_t *curbuffer=self->string;
-   uint8_t *newbuffer;
+bool stringwriter_allocate(stringwriter_t *self, size_t requested_capacity) {
+	size_t new_capacity;
+	uint8_t *curbuffer = self->string;
+	uint8_t *newbuffer;
 
-   if (self->alloc_error) return false;
-   
-   
-   /* grow the current capacity by a power of two.  If still less than requested_capacity,
-      then just accept requested_capacity */
-   new_capacity=self->capacity;
-   if (new_capacity < requested_capacity) {
-      new_capacity*=2;
-      if (new_capacity<requested_capacity) new_capacity=requested_capacity;
-   }
-   
-   /* rebase the pointer - see setuppgalloc.h */
-   /* this will be optimized out if not needed */
-   if (STRINGWRITER_HEADER_SIZE!=0) {
-      if (curbuffer) curbuffer-=STRINGWRITER_HEADER_SIZE;
-   }
-   
-   /* realloc */
-   newbuffer=realloc(curbuffer, new_capacity);
-   if (!newbuffer) {
-      /* alloc error */
-      if (curbuffer) free(curbuffer);
-      self->alloc_error=true;
-      self->string=0;
-      self->capacity=0;
-      return false;
-   }
+	if (self->alloc_error)
+		return false;
 
-   /* rebase the pointer - will be optimized out if not needed */
-   if (STRINGWRITER_HEADER_SIZE!=0) {
-      newbuffer+=STRINGWRITER_HEADER_SIZE;
-   }
-   
-   /* setup new capacity */
-   self->capacity=new_capacity;
-   self->string=newbuffer;   
-   
-   return true;
+	/* grow the current capacity by a power of two.  If still less than requested_capacity,
+	 then just accept requested_capacity */
+	new_capacity = self->capacity;
+	if (new_capacity < requested_capacity) {
+		new_capacity *= 2;
+		if (new_capacity < requested_capacity)
+			new_capacity = requested_capacity;
+	}
+
+	/* rebase the pointer - see setuppgalloc.h */
+	/* this will be optimized out if not needed */
+	if (STRINGWRITER_HEADER_SIZE != 0) {
+		if (curbuffer)
+			curbuffer -= STRINGWRITER_HEADER_SIZE;
+	}
+
+	/* realloc */
+	newbuffer = realloc(curbuffer, new_capacity + STRINGWRITER_HEADER_SIZE);
+
+	if (!newbuffer) {
+		/* alloc error */
+		if (curbuffer)
+			free(curbuffer);
+		self->alloc_error = true;
+		self->string = 0;
+		self->capacity = 0;
+		return false;
+	}
+
+	/* rebase the pointer - will be optimized out if not needed */
+	if (STRINGWRITER_HEADER_SIZE != 0) {
+		newbuffer += STRINGWRITER_HEADER_SIZE;
+	}
+
+	/* setup new capacity */
+	self->capacity = new_capacity;
+	self->string = newbuffer;
+
+	return true;
 }
 
 void *stringwriter_get_alloc_buffer(stringwriter_t *self)

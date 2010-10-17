@@ -6,8 +6,8 @@ MODULE_PATH="`pwd`/$(MODULE_NAME)"
 
 lib_LTLIBRARIES = libpgjson.la
 
-libpgjson_la_LDFLAGS = -shared
-libpgjson_la_LIBADD = ../shared/libjson.la
+libpgjson_la_LDFLAGS = -module
+libpgjson_la_LIBADD = ../shared/libjsonpgalloc.la
 libpgjson_la_SOURCES = \
 	pgjson.c \
 	jsontype.c \
