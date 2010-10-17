@@ -106,6 +106,7 @@ CREATE CAST (jsonbinary AS json)
    AS IMPLICIT;
 
 /* other primitive casts */
+/*
 CREATE CAST (json AS text)
    WITH FUNCTION json_to_text(json)
    AS ASSIGNMENT;
@@ -121,6 +122,7 @@ CREATE CAST (json as bytea)
 CREATE CAST (bytea as json)
    WITHOUT FUNCTION
    AS IMPLICIT;
+*/
 
 /*** jsonpath datatype ***/
 DROP TYPE IF EXISTS jsonpath CASCADE;
@@ -156,6 +158,86 @@ CREATE OPERATOR -> (
    LEFTARG = json,
    RIGHTARG = jsonpath
 );
+
+/*** type casts ***/
+CREATE OR REPLACE FUNCTION json_to_integer(json)
+   RETURNS integer
+   AS 'MODULE_PATHNAME', 'pgjson_json_to_integer'
+   LANGUAGE 'C' IMMUTABLE;
+CREATE OR REPLACE FUNCTION json_from_integer(integer)
+   RETURNS json
+   AS 'MODULE_PATHNAME', 'pgjson_json_from_integer'
+   LANGUAGE 'C' IMMUTABLE;
    
+CREATE OR REPLACE FUNCTION json_to_bigint(json)
+   RETURNS bigint
+   AS 'MODULE_PATHNAME', 'pgjson_json_to_bigint'
+   LANGUAGE 'C' IMMUTABLE;
+CREATE OR REPLACE FUNCTION json_from_bigint(bigint)
+   RETURNS json
+   AS 'MODULE_PATHNAME', 'pgjson_json_from_bigint'
+   LANGUAGE 'C' IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION json_to_doubleprecision(json)
+   RETURNS double precision
+   AS 'MODULE_PATHNAME', 'pgjson_json_to_doubleprecision'
+   LANGUAGE 'C' IMMUTABLE;
+CREATE OR REPLACE FUNCTION json_from_doubleprecision(double precision)
+   RETURNS json
+   AS 'MODULE_PATHNAME', 'pgjson_json_from_doubleprecision'
+   LANGUAGE 'C' IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION json_to_text(json)
+   RETURNS text
+   AS 'MODULE_PATHNAME', 'pgjson_json_to_text'
+   LANGUAGE 'C' IMMUTABLE;
+CREATE OR REPLACE FUNCTION json_from_text(text)
+   RETURNS json
+   AS 'MODULE_PATHNAME', 'pgjson_json_from_text'
+   LANGUAGE 'C' IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION json_to_bytea(json)
+   RETURNS bytea
+   AS 'MODULE_PATHNAME', 'pgjson_json_to_bytea'
+   LANGUAGE 'C' IMMUTABLE;
+CREATE OR REPLACE FUNCTION json_from_bytea(bytea)
+   RETURNS json
+   AS 'MODULE_PATHNAME', 'pgjson_json_from_bytea'
+   LANGUAGE 'C' IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION json_to_boolean(json)
+   RETURNS boolean
+   AS 'MODULE_PATHNAME', 'pgjson_json_to_boolean'
+   LANGUAGE 'C' IMMUTABLE;
+CREATE OR REPLACE FUNCTION json_from_boolean(boolean)
+   RETURNS json
+   AS 'MODULE_PATHNAME', 'pgjson_json_from_boolean'
+   LANGUAGE 'C' IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION json_to_timestamp(json)
+   RETURNS timestamp without time zone
+   AS 'MODULE_PATHNAME', 'pgjson_json_to_timestamp'
+   LANGUAGE 'C' IMMUTABLE;
+CREATE OR REPLACE FUNCTION json_from_timestamp(timestamp without time zone)
+   RETURNS json
+   AS 'MODULE_PATHNAME', 'pgjson_json_from_timestamp'
+   LANGUAGE 'C' IMMUTABLE;
+
+CREATE CAST (json as integer) WITH FUNCTION json_to_integer(json) AS IMPLICIT;
+CREATE CAST (json as bigint) WITH FUNCTION json_to_bigint(json) AS IMPLICIT;
+CREATE CAST (json as double precision) WITH FUNCTION json_to_doubleprecision(json) AS IMPLICIT;
+CREATE CAST (json as text) WITH FUNCTION json_to_text(json) AS IMPLICIT;
+CREATE CAST (json as bytea) WITH FUNCTION json_to_bytea(json) AS IMPLICIT;
+CREATE CAST (json as boolean) WITH FUNCTION json_to_boolean(json) AS IMPLICIT;
+CREATE CAST (json as timestamp without time zone) WITH FUNCTION json_to_timestamp(json) AS IMPLICIT;
+
+CREATE CAST (integer as json) WITH FUNCTION json_from_integer(integer) AS IMPLICIT;
+CREATE CAST (bigint as json) WITH FUNCTION json_from_bigint(bigint) AS IMPLICIT;
+CREATE CAST (double precision as json) WITH FUNCTION json_from_doubleprecision(double precision) AS IMPLICIT;
+CREATE CAST (text as json) WITH FUNCTION json_from_text(text) AS IMPLICIT;
+CREATE CAST (bytea as json) WITH FUNCTION json_from_bytea(bytea) AS IMPLICIT;
+CREATE CAST (boolean as json) WITH FUNCTION json_from_boolean(boolean) AS IMPLICIT;
+CREATE CAST (timestamp without time zone as json) WITH FUNCTION json_from_timestamp(timestamp without time zone) AS IMPLICIT;
+
 COMMIT;
 

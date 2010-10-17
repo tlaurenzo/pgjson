@@ -14,7 +14,7 @@ insert into testbin values (E'\\xeeffffffcafebabecafebabe');
 insert into testbin values (E'\\x0500000000');
 insert into testbin values ('{first: 1, second: 2, third: [1, 2]}'::varchar);
 
-select c::text as json, c as native from testbin;
+--select c::text as json, c as native from testbin;
 
 drop table if exists testtext;
 create table testtext(c json);
@@ -24,7 +24,7 @@ insert into testtext values ('{}');
 insert into testtext values ('{first: 1, second: 2, third: [1, 2]}');
 insert into testtext values ('{first: [1, 2]}');
 
-select c::text as json, c::bytea as bytes from testtext;
+select c as json from testtext;
 
 select ('{a:1,b:2}'::json -> 'a');
 select ('{a:{embed:"document"},b:2}'::json -> 'a');
@@ -51,16 +51,16 @@ insert into users (data) values ('{
 	}
 }');
 
-select id, data -> 'first_name' as "First Name", data -> 'last_name' as "Last Name" from users;
+select id, (data -> 'first_name')::text as "First Name", (data -> 'last_name')::text as "Last Name" from users;
 
 drop view if exists users_flat;
 create view users_flat as
    select
          id,
-         data -> 'first_name' as "First Name", 
-         data -> 'last_name' as "Last Name",
-         data -> 'email.work' as "Work Email",
-         data -> 'email.personal' as "Personal Email"
+         (data -> 'first_name')::text as "First Name", 
+         (data -> 'last_name')::text as "Last Name",
+         (data -> 'email.work')::text as "Work Email",
+         (data -> 'email.personal')::text as "Personal Email"
    from users;
    
 select * from users_flat;

@@ -20,6 +20,17 @@ Datum pgjson_return_undefined_value()
 	PG_RETURN_POINTER(binarydata);
 }
 
+Datum pgjson_return_null_value()
+{
+	void *binarydata;
+
+	binarydata=palloc(sizeof(BSONLITERAL_NULL) + VARHDRSZ);
+	SET_VARSIZE(binarydata, sizeof(BSONLITERAL_NULL)+VARHDRSZ);
+	memcpy(VARDATA(binarydata), BSONLITERAL_NULL, sizeof(BSONLITERAL_NULL));
+
+	PG_RETURN_POINTER(binarydata);
+}
+
 /**
  * Returns an "undefined" string as a cstring
  */

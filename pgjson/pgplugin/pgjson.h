@@ -24,6 +24,11 @@
 Datum pgjson_return_undefined_value();
 
 /**
+ * Allocates a vardata structure and returns a Datum for the null value
+ */
+Datum pgjson_return_null_value();
+
+/**
  * Returns an "undefined" string as a cstring
  */
 Datum pgjson_return_undefined_cstring();
