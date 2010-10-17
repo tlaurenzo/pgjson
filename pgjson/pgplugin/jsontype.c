@@ -126,7 +126,6 @@ static Datum parse_bson_to_json_as_cstring(void *binarydata, size_t binarysize, 
 		}
 	} else {
 		/* success */
-		retval=return_outputter_vardata(&outputter);
 		jsonoutputter_get_buffer(&outputter, &buffer, &buffer_len);
 		stringout=palloc(buffer_len+1);
 		memcpy(stringout, buffer, buffer_len);
