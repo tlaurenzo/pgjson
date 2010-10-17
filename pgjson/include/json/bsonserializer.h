@@ -41,7 +41,7 @@ typedef struct {
 	/**
 	 * Accumulate into the given buffer
 	 */
-	stringwriter_t buffer;
+	stringwriter_t *outputbuffer;
 
 	bool has_error;
 	const char *error_msg;
@@ -66,13 +66,7 @@ typedef struct {
 /**
  * bsonserializer constructor destructor
  */
-void bsonserializer_init(bsonserializer_t *self, size_t buffer_capacity);
+void bsonserializer_init(bsonserializer_t *self, stringwriter_t *outputbuffer);
 void bsonserializer_destroy(bsonserializer_t *self);
-
-/**
- * Gets the buffer.  This buffer will be valid until the destructor is called or further modifications
- * are made, in which case, the buffer may be invalidated.
- */
-uint8_t *bsonserializer_getbuffer(bsonserializer_t *self, size_t *out_length);
 
 #endif /* JSONOBJECT_H_ */

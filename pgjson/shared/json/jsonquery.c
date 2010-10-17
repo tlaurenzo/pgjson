@@ -14,18 +14,22 @@ int  arg_expression_count;
 bool arg_debug=false;
 
 bsonvalue_t bson_value;
-uint8_t *bson_buffer;
-size_t   bson_buffer_len;
+stringwriter_t bsonbuffer=STRINGWRITER_INIT(8192);
 
 int report_result(bsonvalue_t *value)
 {
 	jsonoutputter_t outputter;
 
-	jsonoutputter_open_json_file(&outputter, arg_output);
+	stringwriter_t outputbuffer=STRINGWRITER_INIT(8192);
+
+	jsonoutputter_open_json_buffer(&outputter, &outputbuffer);
 	bsonvalue_visit(value, jsonoutputter_getvisitor(&outputter));
 	jsonoutputter_close(&outputter);
 
+	fwrite(outputbuffer.string, outputbuffer.pos, 1, arg_output);
 	fprintf(arg_output, "\n");
+
+	stringwriter_destroy(&outputbuffer);
 
 	return 0;
 }
@@ -86,7 +90,7 @@ int process_input_json()
 	/* initialize */
 	jsonparser_init(&parser);
 	jsonparser_inputfile(&parser, arg_input);
-	bsonserializer_init(&serializer, 8192);
+	bsonserializer_init(&serializer, &bsonbuffer);
 
 	/* parse */
 	jsonparser_parse(&parser, &serializer.jsonvisitor);
@@ -96,19 +100,13 @@ int process_input_json()
 	}
 
 	/* dont deallocate bsonserializer because we're keeping its buffer */
-	bson_buffer=bsonserializer_getbuffer(&serializer, &bson_buffer_len);
 
 	return 0;
 }
 
 int process_input_bson()
 {
-	stringwriter_t buffer;
-	stringwriter_init(&buffer, 8192);
-	if (!stringwriter_slurp_file(&buffer, arg_input)) return 3;
-	bson_buffer=buffer.string;
-	bson_buffer_len=buffer.pos;
-
+	if (!stringwriter_slurp_file(&bsonbuffer, arg_input)) return 3;
 	return 0;
 }
 
@@ -129,11 +127,11 @@ int process_input()
 		/* dump binary data */
 		if (arg_debug) {
 			fprintf(stderr, "Parsed Input:\n");
-			hexdump(stderr, bson_buffer, bson_buffer_len);
+			hexdump(stderr, bsonbuffer.string, bsonbuffer.pos);
 		}
 
 		/* initialize bson value */
-		if (!bsonvalue_load(&bson_value, bson_buffer, bson_buffer_len, BSONMODE_ROOT)) {
+		if (!bsonvalue_load(&bson_value, bsonbuffer.string, bsonbuffer.pos, BSONMODE_ROOT)) {
 			fprintf(stderr, "ERROR: bsonvalue_load could not interpret the parsed results\n");
 			rc=5;
 		}

@@ -24,6 +24,7 @@ FILE *compare_file=NULL;
 bool json_pretty_print=false;
 
 /* State */
+stringwriter_t outputbuffer;
 jsonoutputter_t outputter;
 
 void print_syntax()
@@ -74,8 +75,6 @@ int process_bson_input()
 
 int handle_output()
 {
-	uint8_t *buffer;
-	size_t len;
 	const char *error_msg;
 
 	if (jsonoutputter_has_error(&outputter, &error_msg)) {
@@ -83,11 +82,12 @@ int handle_output()
 		return 4;
 	}
 
-	jsonoutputter_get_buffer(&outputter, &buffer, &len);
+	jsonoutputter_close(&outputter);
+
 	if (print_hex) {
-		if (!hexdump(output_file, buffer, len)) return 5;
+		if (!hexdump(output_file, outputbuffer.string, outputbuffer.pos)) return 5;
 	} else {
-		if (fwrite(buffer, len, 1, output_file)!=1) {
+		if (fwrite(outputbuffer.string, outputbuffer.pos, 1, output_file)!=1) {
 			fprintf(stderr, "Output error\n");
 			return 3;
 		}
@@ -201,10 +201,11 @@ int main(int argc, char** argv) {
 	}
 
 	/* Open the outputter */
+	stringwriter_init(&outputbuffer, 8192);
 	if (output_format==BSON) {
-		jsonoutputter_open_bson_buffer(&outputter, 8192);
+		jsonoutputter_open_bson_buffer(&outputter, &outputbuffer);
 	} else if (output_format==JSON) {
-		jsonoutputter_open_json_buffer(&outputter, 8192);
+		jsonoutputter_open_json_buffer(&outputter, &outputbuffer);
 		if (json_pretty_print) {
 			jsonoutputter_set_json_options(&outputter, true, 0);
 		}

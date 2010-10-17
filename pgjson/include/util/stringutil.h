@@ -35,6 +35,11 @@ typedef struct stringwriter_t {
 } stringwriter_t;
 
 /**
+ * Stringwriter initializer as a macro
+ */
+#define STRINGWRITER_INIT(initial_capacity) { .capacity = initial_capacity }
+
+/**
  * Initialize a stringwriter with an initial size.
  */
 void stringwriter_init(stringwriter_t *self, size_t initial_capacity);

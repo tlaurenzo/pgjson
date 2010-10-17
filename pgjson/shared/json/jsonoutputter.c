@@ -12,61 +12,32 @@ typedef struct {
 	FILE *out;
 } jsondebugvisitor_t;
 
-bool jsonoutputter_open_json_file(jsonoutputter_t *self, FILE *output_file)
-{
-	self->debug_visitor=0;
-	self->serializer_type=SERTYPE_JSON;
-
-	jsonserializer_initialize(&self->serializer.json, output_file);
-
-	self->output_stream=0;
-	self->output_stream_is_owned=false;
-	self->output_buffer_is_owned=false;
-
-	return true;
-}
-
-bool jsonoutputter_open_json_buffer(jsonoutputter_t *self, size_t initial_capacity)
+bool jsonoutputter_open_json_buffer(jsonoutputter_t *self, stringwriter_t *outputbuffer)
 {
 	self->debug_visitor=0;
 	self->serializer_type=SERTYPE_JSON;
 
 	/* Setup the buffer */
-	self->output_buffer_is_owned=true;
-	stringwriter_init(&self->output_buffer, initial_capacity);
+	self->outputbuffer=outputbuffer;
 
 	/* Get the FILE* handle to the buffer */
 	self->output_stream_is_owned=true;
-	self->output_stream=stringwriter_openfile(&self->output_buffer);
+	self->output_stream=stringwriter_openfile(self->outputbuffer);
 
 	jsonserializer_initialize(&self->serializer.json, self->output_stream);
 	return true;
 }
 
-bool jsonoutputter_open_bson_file(jsonoutputter_t *self, FILE *output_file)
-{
-	self->debug_visitor=0;
-	self->serializer_type=SERTYPE_BSON;
-
-	self->output_stream=output_file;
-	self->output_stream_is_owned=true;
-	self->output_buffer_is_owned=false;
-
-	/* Todo: Should we have a configurable capacity here? */
-	bsonserializer_init(&self->serializer.bson, 4096);
-	return true;
-}
-
-bool jsonoutputter_open_bson_buffer(jsonoutputter_t *self, size_t initial_capacity)
+bool jsonoutputter_open_bson_buffer(jsonoutputter_t *self, stringwriter_t *outputbuffer)
 {
 	self->debug_visitor=0;
 	self->serializer_type=SERTYPE_BSON;
 
 	self->output_stream=0;
 	self->output_stream_is_owned=false;
-	self->output_buffer_is_owned=false;
+	self->outputbuffer=outputbuffer;
 
-	bsonserializer_init(&self->serializer.bson, initial_capacity);
+	bsonserializer_init(&self->serializer.bson, outputbuffer);
 	return true;
 }
 
@@ -117,30 +88,6 @@ bool jsonoutputter_has_error(jsonoutputter_t *self, const char **error_msg)
 	return false;
 }
 
-/* Obtain a reference to the current buffer and length.  Pointers will be valid
- * until any following calls to the outputter/visitor.
- */
-void jsonoutputter_get_buffer(jsonoutputter_t *self, uint8_t **out_buffer, size_t *out_length)
-{
-	switch (self->serializer_type) {
-	case SERTYPE_JSON:
-		if (self->output_buffer_is_owned) {
-			if (self->output_stream) fflush(self->output_stream);
-			*out_buffer=self->output_buffer.string;
-			*out_length=self->output_buffer.pos;
-			return;
-		}
-		break;
-	case SERTYPE_BSON:
-		*out_buffer=self->serializer.bson.buffer.string;
-		*out_length=self->serializer.bson.buffer.pos;
-		return;
-	}
-
-	/* Bad state */
-	*out_buffer=0;
-	*out_length=0;
-}
 
 /**
  * Close the outputter, flushing any pending IO and freeing resources.  If it was
@@ -157,25 +104,12 @@ bool jsonoutputter_close(jsonoutputter_t *self)
 		jsonserializer_destroy(&self->serializer.json);
 		break;
 	case SERTYPE_BSON:
-		/* If we have an output stream, write it now */
-		if (self->output_stream) {
-			buffer_length=self->serializer.bson.buffer.pos;
-			if (buffer_length>0) {
-				if (fwrite(self->serializer.bson.buffer.string, buffer_length, 1, self->output_stream)!=1) {
-					rc=false;
-				}
-			}
-		}
-
 		bsonserializer_destroy(&self->serializer.bson);
 		break;
 	}
 
 	if (self->output_stream_is_owned) {
 		fclose(self->output_stream);
-	}
-	if (self->output_buffer_is_owned) {
-		stringwriter_destroy(&self->output_buffer);
 	}
 	if (self->debug_visitor) {
 		free(self->debug_visitor);

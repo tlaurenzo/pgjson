@@ -61,4 +61,4 @@ static inline void pgjsondebugfree(void *ptr, char *file, int line)
 /* Set the stringwriter header size to the VARHDRSZ - this way
    stringwriter buffers can be returned directly as vardata
 */
-#define STRINGWRITER_HEADER_SIZE 4
+#define STRINGWRITER_HEADER_SIZE VARHDRSZ

@@ -16,15 +16,16 @@ pgjson_jsonpath_in(PG_FUNCTION_ARGS)
 	char *inputtext=PG_GETARG_CSTRING(0);
 	size_t inputtextlen=strlen(inputtext);
 	void *binarydata;
+	size_t binarysize;
+
 	stringwriter_t buffer;
 
 	stringwriter_init(&buffer, inputtextlen*2);
 	if (jsonpath_parse(&buffer, inputtext, inputtextlen)) {
 		/* success */
-		binarydata=palloc(buffer.pos + VARHDRSZ);
+		binarydata=stringwriter_get_alloc_buffer(&buffer);
 		SET_VARSIZE(binarydata, buffer.pos + VARHDRSZ);
-		memcpy(VARDATA(binarydata), buffer.string, buffer.pos);
-		stringwriter_destroy(&buffer);
+		stringwriter_detach(&buffer);
 		PG_RETURN_POINTER(binarydata);
 	} else {
 		/* fail */

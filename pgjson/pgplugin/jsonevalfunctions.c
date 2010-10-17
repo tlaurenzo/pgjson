@@ -26,9 +26,8 @@ pgjson_jsonpath_eval(PG_FUNCTION_ARGS)
 	jsonpathiter_t pathiter;
 	bsonvalue_t resultvalue;
 	jsonoutputter_t resultoutputter;
-	uint8_t *resultbuffer;
-	size_t resultsize;
 	const char *error_msg;
+	stringwriter_t resultbuffer=STRINGWRITER_INIT(VARSIZE_ANY_EXHDR(jsondata));
 
 	/* rehydrate the bsonvalue_t */
 	if (!bsonvalue_load(&rootvalue, VARDATA_ANY(jsondata), VARSIZE_ANY_EXHDR(jsondata),
@@ -49,7 +48,7 @@ pgjson_jsonpath_eval(PG_FUNCTION_ARGS)
 	}
 
 	/* output a standalone value */
-	jsonoutputter_open_bson_buffer(&resultoutputter, VARSIZE_ANY_EXHDR(jsondata));
+	jsonoutputter_open_bson_buffer(&resultoutputter, &resultbuffer);
 	if (!bsonvalue_visit(&resultvalue, jsonoutputter_getvisitor(&resultoutputter)))
 	{
 		/* error generating output */
@@ -65,13 +64,13 @@ pgjson_jsonpath_eval(PG_FUNCTION_ARGS)
 		PGJSON_DEBUGF(LEVEL_WARN, "Internal error serializaing BSON: %s", error_msg);
 		return pgjson_return_undefined_value();
 	}
+	jsonoutputter_close(&resultoutputter);
 
 	/* copy buffer and return */
-	jsonoutputter_get_buffer(&resultoutputter, &resultbuffer, &resultsize);
-	resultdata=palloc(resultsize+VARHDRSZ);
-	SET_VARSIZE(resultdata, resultsize+VARHDRSZ);
-	memcpy(VARDATA(resultdata), resultbuffer, resultsize);
-	jsonoutputter_close(&resultoutputter);
+	resultdata=stringwriter_get_alloc_buffer(&resultbuffer);
+	SET_VARSIZE(resultdata, resultbuffer.pos + VARHDRSZ);
+
+	/* dont free the resultbuffer because we are returning it */
 
 	PG_RETURN_POINTER(resultdata);
 }

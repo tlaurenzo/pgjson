@@ -15,22 +15,18 @@
 /*
  * Cleans up an outputter, returning its value as vardata
  */
-static inline Datum return_outputter_vardata(jsonoutputter_t *outputter)
+static inline Datum return_stringwriter_vardata(stringwriter_t *stringwriter)
 {
-	uint8_t *buffer;
-	size_t   buffer_len;
-	void    *textdata;
+	void    *data;
+	size_t   datalength;
 
-	/* Once we get the palloc code in the json shared bits, we can
-	 * just return the buffer directly, avoiding a copy
-	 */
-	jsonoutputter_get_buffer(outputter, &buffer, &buffer_len);
+	datalength=stringwriter->pos;
+	data=stringwriter_get_alloc_buffer(stringwriter);
+	stringwriter_detach(stringwriter);
+	if (!data) return 0;
+	SET_VARSIZE(data, datalength+VARHDRSZ);
 
-	textdata=palloc(buffer_len + VARHDRSZ);
-	SET_VARSIZE(textdata, buffer_len + VARHDRSZ);
-	memcpy(VARDATA(textdata), buffer, buffer_len);
-
-	PG_RETURN_POINTER(textdata);
+	PG_RETURN_POINTER(data);
 }
 
 
@@ -42,42 +38,43 @@ static inline Datum return_outputter_vardata(jsonoutputter_t *outputter)
 static Datum parse_bson_to_json_as_vardata(void *binarydata, size_t binarysize, bool raise_error)
 {
 	jsonoutputter_t outputter;
+	stringwriter_t outputbuffer=STRINGWRITER_INIT(binarysize*2);
 	int32_t rc;
-	const char *error_msg;
+
 	Datum retval=0;
+	const char *outputerrormsg;
+	bool outputerror;
 
 	/* initialize outputter */
-	jsonoutputter_open_json_buffer(&outputter, binarysize*2);
+	jsonoutputter_open_json_buffer(&outputter, &outputbuffer);
 	rc=bsonparser_parse(binarydata, binarysize,
 			jsonoutputter_getvisitor(&outputter));
+	outputerror=jsonoutputter_has_error(&outputter, &outputerrormsg);
+	jsonoutputter_close(&outputter);
 
 	if (rc<0) {
-		/* check bson parser */
-		/* check bson parser */
 		if (raise_error) {
 			ereport(ERROR, (
 					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("Unable to parse BSON document")));
+					errmsg("BSON Parse error")));
 		} else {
-			PGJSON_DEBUG(LEVEL_WARN, "Unable to parse BSON document");
+			PGJSON_DEBUG(LEVEL_WARN, "BSON Parse error");
 		}
-
-
-	} else if (jsonoutputter_has_error(&outputter, &error_msg)) {
+	} else if (outputerror) {
 		/* check json outputter */
 		if (raise_error) {
 			ereport(ERROR, (
 					errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Unexpected serialization error: %s", error_msg)));
+					errmsg("Unexpected serialization error: %s", outputerrormsg)));
 		} else {
-			PGJSON_DEBUGF(LEVEL_WARN, "Unexpected serialization error: %s", error_msg);
+			PGJSON_DEBUGF(LEVEL_WARN, "Unexpected serialization error: %s", outputerrormsg);
 		}
 	} else {
 		/* success */
-		retval=return_outputter_vardata(&outputter);
+		retval=return_stringwriter_vardata(&outputbuffer);
 	}
 
-	jsonoutputter_close(&outputter);
+	stringwriter_destroy(&outputbuffer);
 
 	if (!retval) return pgjson_return_undefined_text();
 	else return retval;
@@ -91,49 +88,47 @@ static Datum parse_bson_to_json_as_vardata(void *binarydata, size_t binarysize, 
 static Datum parse_bson_to_json_as_cstring(void *binarydata, size_t binarysize, bool raise_error)
 {
 	jsonoutputter_t outputter;
+	stringwriter_t outputbuffer=STRINGWRITER_INIT(binarysize*2);
 	int32_t rc;
-	const char *error_msg;
+
 	Datum retval=0;
-
-	uint8_t *buffer;
-	size_t   buffer_len;
-	char 	*stringout;
-
+	const char *outputerrormsg;
+	bool outputerror;
+	char *retcstring;
 
 	/* initialize outputter */
-	jsonoutputter_open_json_buffer(&outputter, binarysize*2);
+	jsonoutputter_open_json_buffer(&outputter, &outputbuffer);
 	rc=bsonparser_parse(binarydata, binarysize,
 			jsonoutputter_getvisitor(&outputter));
+	outputerror=jsonoutputter_has_error(&outputter, &outputerrormsg);
+	jsonoutputter_close(&outputter);
 
 	if (rc<0) {
-		/* check bson parser */
 		if (raise_error) {
 			ereport(ERROR, (
 					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("Unable to parse BSON document")));
+					errmsg("BSON Parse error")));
 		} else {
-			PGJSON_DEBUG(LEVEL_WARN, "Unable to parse BSON document");
+			PGJSON_DEBUG(LEVEL_WARN, "BSON Parse error");
 		}
-
-	} else if (jsonoutputter_has_error(&outputter, &error_msg)) {
+	} else if (outputerror) {
 		/* check json outputter */
 		if (raise_error) {
 			ereport(ERROR, (
 					errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Unexpected serialization error: %s", error_msg)));
+					errmsg("Unexpected serialization error: %s", outputerrormsg)));
 		} else {
-			PGJSON_DEBUGF(LEVEL_WARN, "Unexpected serialization error: %s", error_msg);
+			PGJSON_DEBUGF(LEVEL_WARN, "Unexpected serialization error: %s", outputerrormsg);
 		}
-	} else {
+	} else if (outputbuffer.pos>0) {
 		/* success */
-		jsonoutputter_get_buffer(&outputter, &buffer, &buffer_len);
-		stringout=palloc(buffer_len+1);
-		memcpy(stringout, buffer, buffer_len);
-		stringout[buffer_len]=0;
-		retval=CStringGetDatum(stringout);
+		retcstring=palloc(outputbuffer.pos+1);
+		memcpy(retcstring, outputbuffer.string, outputbuffer.pos);
+		retcstring[outputbuffer.pos]=0;
+		retval=CStringGetDatum(retcstring);
 	}
 
-	jsonoutputter_close(&outputter);
+	stringwriter_destroy(&outputbuffer);
 
 	if (!retval) return pgjson_return_undefined_cstring();
 	else return retval;
@@ -147,42 +142,49 @@ static Datum parse_json_to_bson_as_vardata(void *textdata, size_t textsize, bool
 {
 	jsonparser_t parser;
 	jsonoutputter_t outputter;
-	const char *error_msg;
+	stringwriter_t outputbuffer=STRINGWRITER_INIT(textsize*2);
+	int32_t rc;
+
 	Datum retval=0;
+	const char *outputerrormsg;
+	bool outputerror;
 
-	/* get the input text */
-
-	/* setup parser and outputter */
+	/* initialize outputter */
 	jsonparser_init(&parser);
 	jsonparser_inputstring(&parser, textdata, textsize, false);
-	jsonoutputter_open_bson_buffer(&outputter, textsize*2);
+	jsonoutputter_open_bson_buffer(&outputter, &outputbuffer);
+	jsonparser_parse(&parser,
+			jsonoutputter_getvisitor(&outputter));
+	outputerror=jsonoutputter_has_error(&outputter, &outputerrormsg);
+	jsonoutputter_close(&outputter);
 
-	/* parse */
-	jsonparser_parse(&parser, jsonoutputter_getvisitor(&outputter));
-
-	/* check for errors */
 	if (parser.has_error) {
 		if (raise_error) {
 			ereport(ERROR, (
 					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("%s", parser.error_msg)));
+					errmsg("JSON Parse error: %s", parser.error_msg)));
+		} else {
+			PGJSON_DEBUGF(LEVEL_WARN, "JSON Parse error", parser.error_msg);
 		}
-	} else if (jsonoutputter_has_error(&outputter, &error_msg)) {
+	} else if (outputerror) {
+		/* check json outputter */
 		if (raise_error) {
 			ereport(ERROR, (
 					errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Unexpected serialization error: %s", error_msg)));
+					errmsg("Unexpected serialization error: %s", outputerrormsg)));
+		} else {
+			PGJSON_DEBUGF(LEVEL_WARN, "Unexpected serialization error: %s", outputerrormsg);
 		}
 	} else {
 		/* success */
-		retval=return_outputter_vardata(&outputter);
+		retval=return_stringwriter_vardata(&outputbuffer);
 	}
 
-	jsonparser_destroy(&parser);
-	jsonoutputter_close(&outputter);
+	stringwriter_destroy(&outputbuffer);
 
-	if (!retval) return pgjson_return_undefined_value();
+	if (!retval) return pgjson_return_undefined_text();
 	else return retval;
+
 }
 
 /**** Text and Binary BSON IO ****/

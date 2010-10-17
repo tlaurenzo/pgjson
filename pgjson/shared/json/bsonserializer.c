@@ -20,7 +20,7 @@ static const size_t INITIAL_STATE_STACK_CAPACITY=10;
 static const size_t INITIAL_LABEL_LOOKASIDE_CAPACITY=256;
 
 /** Class methods **/
-void bsonserializer_init(bsonserializer_t *self, size_t buffer_capacity)
+void bsonserializer_init(bsonserializer_t *self, stringwriter_t *outputbuffer)
 {
 	self->jsonvisitor.vft=&bsonserializer_vft;
 	self->has_error=false;
@@ -38,20 +38,13 @@ void bsonserializer_init(bsonserializer_t *self, size_t buffer_capacity)
 	self->docstate_stack[0].member_count=0;
 	self->docstate_stack[0].type='X';
 
-	stringwriter_init(&self->buffer, buffer_capacity);
+	self->outputbuffer=outputbuffer;
 }
 
 void bsonserializer_destroy(bsonserializer_t *self)
 {
 	if (self->docstate_stack) free(self->docstate_stack);
-	stringwriter_destroy(&self->buffer);
 	free(self->label_lookaside.bytes);
-}
-
-uint8_t *bsonserializer_getbuffer(bsonserializer_t *self, size_t *out_length)
-{
-	if (out_length) *out_length=self->buffer.pos;
-	return self->buffer.string;
 }
 
 /* Quick type cast to ourself */
@@ -87,14 +80,14 @@ static bool introduce_element(jsonvisitor_t *self, bsontype_t value_type)
 
 	/* Write the type byte */
 	if (curdoc_type=='A') {
-		stringwriter_append_byte(&SELF->buffer, value_type);
+		stringwriter_append_byte(SELF->outputbuffer, value_type);
 		/* Generate a numeric index */
 		numeric_index_len=sprintf(numeric_index, "%d", curdoc->member_count);
-		stringwriter_append(&SELF->buffer, numeric_index, numeric_index_len+1);
+		stringwriter_append(SELF->outputbuffer, numeric_index, numeric_index_len+1);
 	} else if (curdoc_type=='O') {
-		stringwriter_append_byte(&SELF->buffer, value_type);
+		stringwriter_append_byte(SELF->outputbuffer, value_type);
 		/* Dump the label lookaside as modified UTF-8 */
-		stringwriter_append_modified_utf8z(&SELF->buffer,
+		stringwriter_append_modified_utf8z(SELF->outputbuffer,
 				SELF->label_lookaside.bytes,
 				SELF->label_lookaside.length);
 	} else if (curdoc_type=='X' && curdoc->member_count==0) {
@@ -102,7 +95,7 @@ static bool introduce_element(jsonvisitor_t *self, bsontype_t value_type)
 		/* write an inverted tag */
 		inverted_tag=-((int32_t)value_type);
 		inverted_tag=BSON_SWAP_HTOB32(inverted_tag);
-		stringwriter_append(&SELF->buffer, &inverted_tag, sizeof(int32_t));
+		stringwriter_append(SELF->outputbuffer, &inverted_tag, sizeof(int32_t));
 	} else {
 		/* state to introduce value */
 		SELF->has_error=true;
@@ -131,10 +124,10 @@ static bool end_document(jsonvisitor_t *self, char assertoftype)
 	}
 
 	/* Write terminating null */
-	stringwriter_append_byte(&SELF->buffer, 0);
+	stringwriter_append_byte(SELF->outputbuffer, 0);
 
 	/* Go back and write the document size: current position - state.offset */
-	doclength=SELF->buffer.pos - state->offset;
+	doclength=SELF->outputbuffer->pos - state->offset;
 
 	/* Bounds check for 64bit platforms or large unsigned size_t */
 	if (doclength>INT_MAX) {
@@ -144,7 +137,7 @@ static bool end_document(jsonvisitor_t *self, char assertoftype)
 	}
 
 	doclengthswapped=BSON_SWAP_HTOB32(doclength);
-	stringwriter_write(&SELF->buffer, state->offset, &doclengthswapped, sizeof(doclengthswapped));
+	stringwriter_write(SELF->outputbuffer, state->offset, &doclengthswapped, sizeof(doclengthswapped));
 
 	/* pop the state */
 	SELF->docstate_stack_index-=1;
@@ -152,7 +145,7 @@ static bool end_document(jsonvisitor_t *self, char assertoftype)
 	/* do a memory check on the stringwriter.  just doing it at key points
 	 * keeps us from having to check after every call
 	 */
-	if (SELF->buffer.capacity==0) {
+	if (SELF->outputbuffer->capacity==0) {
 		SELF->has_error=true;
 		SELF->error_msg=MSG_OUT_OF_MEMORY;
 		return false;
@@ -211,7 +204,7 @@ static bool start_object(jsonvisitor_t *self)
 	state->member_count=0;
 
 	/* Current position is start of doc. Advance by 4 bytes. */
-	state->offset=stringwriter_skip(&SELF->buffer, 4);
+	state->offset=stringwriter_skip(SELF->outputbuffer, 4);
 
 	return true;
 }
@@ -231,7 +224,7 @@ static bool start_array(jsonvisitor_t *self)
 	state->member_count=0;
 
 	/* Current position is start of doc. Advance by 4 bytes. */
-	state->offset=stringwriter_skip(&SELF->buffer, 4);
+	state->offset=stringwriter_skip(SELF->outputbuffer, 4);
 
 	return true;
 }
@@ -260,7 +253,7 @@ static bool add_empty_object(jsonvisitor_t *self)
 	}
 
 	/* Write the empty object bytes */
-	stringwriter_append(&SELF->buffer, BSON_EMPTYOBJECT, sizeof(BSON_EMPTYOBJECT));
+	stringwriter_append(SELF->outputbuffer, BSON_EMPTYOBJECT, sizeof(BSON_EMPTYOBJECT));
 
 	return true;
 }
@@ -268,7 +261,7 @@ static bool add_empty_array(jsonvisitor_t *self)
 {
 	if (!introduce_element(self, BSONTYPE_ARRAY)) return false;
 
-	stringwriter_append(&SELF->buffer, BSON_EMPTYOBJECT, sizeof(BSON_EMPTYOBJECT));
+	stringwriter_append(SELF->outputbuffer, BSON_EMPTYOBJECT, sizeof(BSON_EMPTYOBJECT));
 
 	return true;
 }
@@ -278,7 +271,7 @@ static bool add_bool(jsonvisitor_t *self, bool bvalue)
 	if (!introduce_element(self, BSONTYPE_BOOL)) return false;
 
 	/* Write the value */
-	stringwriter_append_byte(&SELF->buffer, bvalue ? 1: 0);
+	stringwriter_append_byte(SELF->outputbuffer, bvalue ? 1: 0);
 
 	return true;
 }
@@ -288,7 +281,7 @@ static bool add_int32(jsonvisitor_t *self, int32_t intvalue)
 
 	/* Write the value */
 	intvalue=BSON_SWAP_HTOB32(intvalue);
-	stringwriter_append(&SELF->buffer, &intvalue, sizeof(intvalue));
+	stringwriter_append(SELF->outputbuffer, &intvalue, sizeof(intvalue));
 
 	return true;
 }
@@ -298,7 +291,7 @@ static bool add_int64(jsonvisitor_t *self, int64_t intvalue)
 
 	/* Write the value */
 	intvalue=BSON_SWAP_HTOB64(intvalue);
-	stringwriter_append(&SELF->buffer, &intvalue, sizeof(intvalue));
+	stringwriter_append(SELF->outputbuffer, &intvalue, sizeof(intvalue));
 
 	return true;
 }
@@ -310,7 +303,7 @@ static bool add_double(jsonvisitor_t *self, double doublevalue)
 	if (!introduce_element(self, BSONTYPE_DOUBLE)) return false;
 
 	/* Write the value */
-	stringwriter_append(&SELF->buffer, &double_binary, sizeof(doublevalue));
+	stringwriter_append(SELF->outputbuffer, &double_binary, sizeof(doublevalue));
 
 	return true;
 }
@@ -330,9 +323,9 @@ static bool add_string(jsonvisitor_t *self, jsonstring_t *svalue)
 
 	/* note that for some odd reason, the bson spec calls for the written length to include the terminating null */
 	lengthswapped=BSON_SWAP_HTOB32((uint32_t)length+1);
-	stringwriter_append(&SELF->buffer, &lengthswapped, sizeof(lengthswapped));
-	stringwriter_append(&SELF->buffer, svalue->bytes, length);
-	stringwriter_append_byte(&SELF->buffer, 0);
+	stringwriter_append(SELF->outputbuffer, &lengthswapped, sizeof(lengthswapped));
+	stringwriter_append(SELF->outputbuffer, svalue->bytes, length);
+	stringwriter_append_byte(SELF->outputbuffer, 0);
 
 	return true;
 }

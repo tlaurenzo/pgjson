@@ -35,19 +35,17 @@ typedef struct jsonoutputter_t {
 	 * internal buffer to the stream prior to close.
 	 */
 	FILE *output_stream;
-	stringwriter_t output_buffer;
-	bool output_buffer_is_owned;
 	bool output_stream_is_owned;
+
+	stringwriter_t *outputbuffer;
+	bool outputbufferisowned;
 
 	jsonvisitor_t *debug_visitor;
 } jsonoutputter_t;
 
 /* Use one of the following constructors */
-bool jsonoutputter_open_json_file(jsonoutputter_t *self, FILE *output_file);
-bool jsonoutputter_open_json_buffer(jsonoutputter_t *self, size_t initial_capacity);
-
-bool jsonoutputter_open_bson_file(jsonoutputter_t *self, FILE *output_file);
-bool jsonoutputter_open_bson_buffer(jsonoutputter_t *self, size_t initial_capacity);
+bool jsonoutputter_open_json_buffer(jsonoutputter_t *self, stringwriter_t *outputbuffer);
+bool jsonoutputter_open_bson_buffer(jsonoutputter_t *self, stringwriter_t *outputbuffer);
 
 /**
  * If outputting json text, set whether pretty printing is desired
@@ -65,11 +63,6 @@ jsonvisitor_t *jsonoutputter_getdebugvisitor(jsonoutputter_t *self);
  * Gets the serializer's error info
  */
 bool jsonoutputter_has_error(jsonoutputter_t *self, const char **error_msg);
-
-/* Obtain a reference to the current buffer and length.  Pointers will be valid
- * until any following calls to the outputter/visitor.
- */
-void jsonoutputter_get_buffer(jsonoutputter_t *self, uint8_t **out_buffer, size_t *out_length);
 
 /**
  * Close the outputter, flushing any pending IO and freeing resources.  If it was
