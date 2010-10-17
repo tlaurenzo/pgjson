@@ -51,7 +51,7 @@
 	converter(bsonliteral, value); \
 	resultdata=palloc(sizeof(bsonliteral) + VARHDRSZ); \
 	memcpy(VARDATA(resultdata), bsonliteral, sizeof(bsonliteral)); \
-	SET_VARSIZE(resultdata, sizeof(bsonliteral)); \
+	SET_VARSIZE(resultdata, sizeof(bsonliteral)+VARHDRSZ); \
 	PG_RETURN_POINTER(resultdata);
 
 
