@@ -46,7 +46,8 @@ CREATE OR REPLACE FUNCTION jsonbinary_from_varchar(varchar)
    RETURNS jsonbinary
    AS 'MODULE_PATHNAME', 'pgjson_jsonbinary_from_text'
    LANGUAGE 'C' IMMUTABLE STRICT;
-   
+
+/*   
 CREATE CAST (jsonbinary AS text)
    WITH FUNCTION jsonbinary_to_text(jsonbinary)
    AS ASSIGNMENT;
@@ -62,6 +63,7 @@ CREATE CAST (jsonbinary as bytea)
 CREATE CAST (bytea as jsonbinary)
    WITHOUT FUNCTION
    AS IMPLICIT;
+   */
    
 /*** json datatype ***/
 DROP TYPE IF EXISTS json CASCADE;
@@ -145,9 +147,6 @@ CREATE TYPE jsonpath (
    output = jsonpath_out
 );
 
-CREATE CAST (jsonpath AS bytea)
-   WITHOUT FUNCTION;
-   
 /*** evaluation and type cast functions ***/
 CREATE OR REPLACE FUNCTION jsoneval(json, jsonpath)
    RETURNS json
@@ -196,6 +195,15 @@ CREATE OR REPLACE FUNCTION json_from_text(text)
    AS 'MODULE_PATHNAME', 'pgjson_json_from_text'
    LANGUAGE 'C' IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION json_to_varchar(json)
+   RETURNS varchar
+   AS 'MODULE_PATHNAME', 'pgjson_json_to_text'
+   LANGUAGE 'C' IMMUTABLE;
+CREATE OR REPLACE FUNCTION json_from_varchar(varchar)
+   RETURNS json
+   AS 'MODULE_PATHNAME', 'pgjson_json_from_text'
+   LANGUAGE 'C' IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION json_to_bytea(json)
    RETURNS bytea
    AS 'MODULE_PATHNAME', 'pgjson_json_to_bytea'
@@ -227,6 +235,7 @@ CREATE CAST (json as integer) WITH FUNCTION json_to_integer(json) AS IMPLICIT;
 CREATE CAST (json as bigint) WITH FUNCTION json_to_bigint(json) AS IMPLICIT;
 CREATE CAST (json as double precision) WITH FUNCTION json_to_doubleprecision(json) AS IMPLICIT;
 CREATE CAST (json as text) WITH FUNCTION json_to_text(json) AS IMPLICIT;
+CREATE CAST (json as varchar) WITH FUNCTION json_to_varchar(json) AS IMPLICIT;
 CREATE CAST (json as bytea) WITH FUNCTION json_to_bytea(json) AS IMPLICIT;
 CREATE CAST (json as boolean) WITH FUNCTION json_to_boolean(json) AS IMPLICIT;
 CREATE CAST (json as timestamp without time zone) WITH FUNCTION json_to_timestamp(json) AS IMPLICIT;
@@ -235,6 +244,7 @@ CREATE CAST (integer as json) WITH FUNCTION json_from_integer(integer) AS IMPLIC
 CREATE CAST (bigint as json) WITH FUNCTION json_from_bigint(bigint) AS IMPLICIT;
 CREATE CAST (double precision as json) WITH FUNCTION json_from_doubleprecision(double precision) AS IMPLICIT;
 CREATE CAST (text as json) WITH FUNCTION json_from_text(text) AS IMPLICIT;
+CREATE CAST (varchar as json) WITH FUNCTION json_from_varchar(varchar) AS IMPLICIT;
 CREATE CAST (bytea as json) WITH FUNCTION json_from_bytea(bytea) AS IMPLICIT;
 CREATE CAST (boolean as json) WITH FUNCTION json_from_boolean(boolean) AS IMPLICIT;
 CREATE CAST (timestamp without time zone as json) WITH FUNCTION json_from_timestamp(timestamp without time zone) AS IMPLICIT;

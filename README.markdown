@@ -123,15 +123,9 @@ The following types are defined:
   
 Casts
 =====
-json/jsonbinary types can be cast to and from the following types at will:
-
-* bytea - currently returns the internal form
-* varchar
-* text
-
-Casting will be reworked so that it is not a shortcut for accessing the internal
-form but acts like the JavaScript constructors for the primitive types, allowing
-casting between the JSON variant and concrete postgres types.
+Casting is provided to and from all primitive types.  The way this is done
+is being investigated to determine the right set of casts and auxillary
+functions to make interactions natual feeling.
 
 Operators
 =========
@@ -159,12 +153,12 @@ the following table:
 
 In order to access properties of the data, do something like this:
 
-	# select id, data -> 'first_name' as "First Name", data -> 'last_name' as "Last Name" from users;
-	 id | First Name | Last Name  
-	----+------------+------------
-	  1 | "Terry"    | "Laurenzo"
-	  2 | "Joe"      | "Schmoe"
-	(2 rows)
+	# select id, (data -> 'first_name')::text as "First Name", (data -> 'last_name')::text as "Last Name" from users;
+    id | First Name | Last Name 
+   ----+------------+-----------
+     1 | Terry      | Laurenzo
+     2 | Joe        | Schmoe
+   (2 rows)
 
 Note that the values being returned are json objects (representing strings).  It would be
 more valuable to cast these to a known internal type.
@@ -174,23 +168,28 @@ You can also create a flattened view:
 	create view users_flat as
 		select
 				id,
-				data -> 'first_name' as "First Name", 
-				data -> 'last_name' as "Last Name",
-				data -> 'email.work' as "Work Email",
-				data -> 'email.personal' as "Personal Email"
+				(data -> 'first_name')::text as "First Name", 
+				(data -> 'last_name')::text as "Last Name",
+				(data -> 'email.work')::text as "Work Email",
+				(data -> 'email.personal')::text as "Personal Email"
 		from users;
 
 And run queries against it:
 		
 	# select * from users_flat;
-	 id | First Name | Last Name  |        Work Email        |    Personal Email    
-	----+------------+------------+--------------------------+----------------------
-	  1 | "Terry"    | "Laurenzo" | "someone@bigcompany.com" | "justanyone@aol.com"
-	  2 | "Joe"      | "Schmoe"   | "joe@shcmoeswidgets.com" | "joe@aol.com"
-	(2 rows)
-
-		
+    id | First Name | Last Name |       Work Email       |   Personal Email   
+   ----+------------+-----------+------------------------+--------------------
+     1 | Terry      | Laurenzo  | someone@bigcompany.com | justanyone@aol.com
+     2 | Joe        | Schmoe    | joe@shcmoeswidgets.com | joe@aol.com
+   (2 rows)
 	
+   # select * from users_flat where "Last Name" = 'Laurenzo';
+    id | First Name | Last Name |       Work Email       |   Personal Email   
+   ----+------------+-----------+------------------------+--------------------
+     1 | Terry      | Laurenzo  | someone@bigcompany.com | justanyone@aol.com
+   (1 row)	
+	
+   
 Example
 -------
 Here is a stupid example that exercises the json and jsonbinary datatypes (these types differ in that json
