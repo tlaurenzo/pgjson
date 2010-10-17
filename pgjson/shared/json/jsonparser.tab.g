@@ -58,7 +58,7 @@ static void yyjsonerror(YYLTYPE* locp, struct jsonparser_t* context, jsonvisitor
 /* Rules */
 
 document
-		:	object
+		:	any_value
 		;
 
 object	
@@ -78,7 +78,7 @@ object_elements
 object_element
 		:	field_name	{ visitor->vft->push_label(visitor, &$1); }
 			COLON
-			field_value
+			any_value
 		;
 
 /* field_name always returns a stringval (special case) */		
@@ -87,7 +87,7 @@ field_name
 		|	STRING		{ $$=$1; }
 		;
 		
-field_value
+any_value
 		:	STRING				{ visitor->vft->add_string(visitor, &$1); }
 		|	INTEGER				{ visitor->vft->add_int32(visitor, $1); }
 		| 	BIGINT				{ visitor->vft->add_int64(visitor, $1); }
@@ -107,8 +107,8 @@ array
 		;
 		
 array_elements
-		:	field_value
-		|	field_value
+		:	any_value
+		|	any_value
 			COMMA 
 			array_elements
 		;
