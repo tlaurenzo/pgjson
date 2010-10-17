@@ -31,6 +31,7 @@ typedef struct stringwriter_t {
 	uint8_t* string;
 	size_t pos;
 	size_t capacity;
+	bool alloc_error;
 } stringwriter_t;
 
 /**
@@ -39,9 +40,24 @@ typedef struct stringwriter_t {
 void stringwriter_init(stringwriter_t *self, size_t initial_capacity);
 
 /**
+ * Detach the underlying buffer and reset.  Future calls to destroy
+ * will not deallocate the buffer.
+ */
+void stringwriter_detach(stringwriter_t *self);
+
+/**
  * Deallocate a stringwriter's memory
  */
 void stringwriter_destroy(stringwriter_t *self);
+
+/**
+ * If the STRINGWRITER_HEADER_SIZE macro was set when the object was compiled,
+ * then the stringwriter always allocates memory with the given header size
+ * prefixed.  This is typically transparent to callers.  The buffer actually
+ * allocated can be obtained with this call.  It may return null if the
+ * buffer had an allocation error or was never allocated.
+ */
+void *stringwriter_get_alloc_buffer(stringwriter_t *self);
 
 /**
  * Clears the string without releasing memory
@@ -53,19 +69,19 @@ void stringwriter_clear(stringwriter_t *self);
  * The source is expected to be in a UTF-8 encoding.
  * return size written or 0 on failure
  */
-int stringwriter_append(stringwriter_t *self, const void* source, size_t bytes);
+bool stringwriter_append(stringwriter_t *self, const void* source, size_t bytes);
 
 /**
  * Append a single byte.
  * Return 1 on success, 0 on failure
  */
-int stringwriter_append_byte(stringwriter_t *self, uint8_t byte);
+bool stringwriter_append_byte(stringwriter_t *self, uint8_t byte);
 
 /**
  * Writes a single escape char as defined by C-like languages
  * return !0 if success
  */
-int stringwriter_append_escape_char(stringwriter_t *self, char escape);
+bool stringwriter_append_escape_char(stringwriter_t *self, char escape);
 
 /**
  * Advances the stringwriter by the given amount, returning the offset
@@ -80,20 +96,20 @@ size_t stringwriter_skip(stringwriter_t *self, size_t delta);
  * created with stringwriter_skip.  Correctly handles writing past
  * the end of the current allocated space.
  */
-int stringwriter_write(stringwriter_t *self, size_t pos, const void *source, size_t bytes);
+bool stringwriter_write(stringwriter_t *self, size_t pos, const void *source, size_t bytes);
 
 /**
  * Appends a unicode codepoint to the string
  * return !0 if success
  */
-int stringwriter_append_codepoint(stringwriter_t *self, uint32_t codepoint);
+bool stringwriter_append_codepoint(stringwriter_t *self, uint32_t codepoint);
 
 /**
  * Appends the source as a "modified UTF-8" string where nulls are encoded
  * as 0xc0 0x80.  Appends a null to the end.
  * Returns 0 on failure
  */
-int stringwriter_append_modified_utf8z(stringwriter_t *self, uint8_t* source, size_t bytes);
+bool stringwriter_append_modified_utf8z(stringwriter_t *self, uint8_t* source, size_t bytes);
 
 /**
  * Writes an escaped JSON string.  This does
@@ -109,12 +125,12 @@ bool stringwriter_append_jsonescape(stringwriter_t *self, const uint8_t *utf8_st
  * Returns 0 on failure or encountering maxbytes without finding a null.
  * Otherwise, returns the number of bytes read (including null)
  */
-int stringwriter_unpack_modified_utf8z(stringwriter_t *self, const char *source, size_t maxbytes);
+bool stringwriter_unpack_modified_utf8z(stringwriter_t *self, const char *source, size_t maxbytes);
 
 /**
  * Fills this stringwriter by reading every available byte from input_file
  */
-int stringwriter_slurp_file(stringwriter_t *self, FILE *input_file);
+bool stringwriter_slurp_file(stringwriter_t *self, FILE *input_file);
 
 /**
  * Opens a C stream that can be used to output to this writer.

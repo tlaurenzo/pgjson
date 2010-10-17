@@ -50,22 +50,28 @@ static const uint8_t UTF8_MODNULL[]={ 0xc0, 0x80 };
 /**** stringwriter ****/
 void stringwriter_init(stringwriter_t *self, size_t initial_capacity)
 {
-	self->string=(char*)malloc(initial_capacity);
-	if (self->string) {
-		self->capacity=initial_capacity;
-	} else {
-		self->capacity=0;
-	}
+	self->string=0;
+   self->capacity=initial_capacity;
 	self->pos=0;
+	self->alloc_error=false;
+}
+
+void stringwriter_detach(stringwriter_t *self)
+{
+   self->string=0;
+   self->capacity=0;
+   self->pos=0;
 }
 
 void stringwriter_destroy(stringwriter_t *self)
 {
-	if (self->string) {
-		free(self->string);
-		self->string=0;
-		self->capacity=0;
-		self->pos=0;
+   uint8_t *curbuffer=self->string;
+   if (STRINGWRITER_HEADER_SIZE!=0) {
+      if (curbuffer) curbuffer-=STRINGWRITER_HEADER_SIZE;
+   }
+   
+	if (curbuffer) {
+		free(curbuffer);
 	}
 }
 
@@ -74,64 +80,89 @@ void stringwriter_clear(stringwriter_t *self)
 	self->pos=0;
 }
 
-/**
- * Ensure that at least addl_capacity+1 bytes are available in the stringwriter
- */
-inline static int stringwriter_ensure_capacity(stringwriter_t *self, size_t addl_capacity)
+bool stringwriter_allocate(stringwriter_t *self, size_t requested_capacity)
 {
-	size_t needed_capacity, new_capacity;
+   size_t  new_capacity;
+   uint8_t *curbuffer=self->string;
+   uint8_t *newbuffer;
 
-	if (self->capacity==0) return 0;	// Previous OOM
+   if (self->alloc_error) return false;
+   
+   
+   /* grow the current capacity by a power of two.  If still less than requested_capacity,
+      then just accept requested_capacity */
+   new_capacity=self->capacity;
+   if (new_capacity < requested_capacity) {
+      new_capacity*=2;
+      if (new_capacity<requested_capacity) new_capacity=requested_capacity;
+   }
+   
+   /* rebase the pointer - see setuppgalloc.h */
+   /* this will be optimized out if not needed */
+   if (STRINGWRITER_HEADER_SIZE!=0) {
+      if (curbuffer) curbuffer-=STRINGWRITER_HEADER_SIZE;
+   }
+   
+   /* realloc */
+   newbuffer=realloc(curbuffer, new_capacity);
+   if (!newbuffer) {
+      /* alloc error */
+      if (curbuffer) free(curbuffer);
+      self->alloc_error=true;
+      self->string=0;
+      self->capacity=0;
+      return false;
+   }
 
-	// Realloc if necessary
-	needed_capacity=self->pos + addl_capacity + 1;
-	if (self->capacity<needed_capacity) {
-		// Increase by power of 2 for efficient allocation
-		new_capacity=self->capacity;
-		while (new_capacity<needed_capacity) {
-			new_capacity<<=2;
-			if (new_capacity==0) {
-				// Overflow
-				self->capacity=0;
-				return 0;
-			}
-		}
-
-		self->string=realloc(self->string, new_capacity);
-		if (!self->string) {
-			self->capacity=0;
-			self->pos=0;
-			return 0;	// OOM
-		} else {
-			self->capacity=new_capacity;
-		}
-	}
-
-	return 1;
+   /* rebase the pointer - will be optimized out if not needed */
+   if (STRINGWRITER_HEADER_SIZE!=0) {
+      newbuffer+=STRINGWRITER_HEADER_SIZE;
+   }
+   
+   /* setup new capacity */
+   self->capacity=new_capacity;
+   self->string=newbuffer;   
+   
+   return true;
 }
 
-inline int stringwriter_append(stringwriter_t *self, const void *source, size_t bytes)
+void *stringwriter_get_alloc_buffer(stringwriter_t *self)
 {
-	if (!stringwriter_ensure_capacity(self, bytes)) return 0;
+   uint8_t *curbuffer=self->string;
+   if (STRINGWRITER_HEADER_SIZE!=0) {
+      if (curbuffer) curbuffer-=STRINGWRITER_HEADER_SIZE;
+   }
+   
+   return curbuffer;
+}
+
+
+#define VERIFY_ALLOC(self, addl_capacity) \
+   if ((!self->string || self->capacity < self->pos+addl_capacity) && !stringwriter_allocate(self, self->pos+addl_capacity)) return false;
+   
+
+inline bool stringwriter_append(stringwriter_t *self, const void *source, size_t bytes)
+{
+   VERIFY_ALLOC(self, bytes);
 
 	memcpy(self->string + self->pos, source, bytes);
 	self->pos+=bytes;
 
-	return 1;
+	return true;
 }
 
-inline int stringwriter_append_byte(stringwriter_t *self, uint8_t byte)
+inline bool stringwriter_append_byte(stringwriter_t *self, uint8_t byte)
 {
-	if (!stringwriter_ensure_capacity(self, 1)) return 0;
+   VERIFY_ALLOC(self, 1);
 	self->string[self->pos++]=byte;
-	return 1;
+	return true;
 }
 
-int stringwriter_append_escape_char(stringwriter_t *self, char escape)
+bool stringwriter_append_escape_char(stringwriter_t *self, char escape)
 {
 	char replace;
 
-	if (!stringwriter_ensure_capacity(self, 1)) return 0;
+	VERIFY_ALLOC(self, 1);
 	switch (escape) {
 	case '\'': replace='\''; break;
 	case '"':  replace='"';  break;
@@ -148,14 +179,14 @@ int stringwriter_append_escape_char(stringwriter_t *self, char escape)
 
 	self->string[self->pos++]=replace;
 
-	return 1;
+	return true;
 }
 
 /**
  * TODO: This method needs testing.  I wrote it from memory and a scratch sheet
  * of paper.
  */
-int stringwriter_append_codepoint(stringwriter_t *self, uint32_t codepoint)
+bool stringwriter_append_codepoint(stringwriter_t *self, uint32_t codepoint)
 {
 	char codepoints[4];
 	size_t size;
@@ -197,9 +228,9 @@ size_t stringwriter_skip(stringwriter_t *self, size_t delta)
 	return original_pos;
 }
 
-int stringwriter_write(stringwriter_t *self, size_t pos, const void *source, size_t bytes)
+bool stringwriter_write(stringwriter_t *self, size_t pos, const void *source, size_t bytes)
 {
-	int rc;
+	bool rc;
 	size_t original_pos=self->pos;
 	self->pos=pos;
 	rc=stringwriter_append(self, source, bytes);
@@ -207,21 +238,18 @@ int stringwriter_write(stringwriter_t *self, size_t pos, const void *source, siz
 	return rc;
 }
 
-int stringwriter_append_modified_utf8z(stringwriter_t *self, uint8_t* source, size_t bytes)
+bool stringwriter_append_modified_utf8z(stringwriter_t *self, uint8_t* source, size_t bytes)
 {
 	/* Write in span sized traunches to avoid alloc calls */
 	size_t mark=0;
 	size_t i;
-	int rc;
 
 	for (i=0; i<bytes; i++) {
 		if (source[i]==0) {
 			/* Dump from mark */
 			if (mark<i) {
-				rc=stringwriter_append(self, source+mark, i-mark);
-				if (!rc) return 0;
-				rc=stringwriter_append(self, UTF8_MODNULL, 2);
-				if (!rc) return 0;
+				stringwriter_append(self, source+mark, i-mark);
+				stringwriter_append(self, UTF8_MODNULL, 2);
 				mark=i+1;
 			}
 		}
@@ -229,18 +257,16 @@ int stringwriter_append_modified_utf8z(stringwriter_t *self, uint8_t* source, si
 
 	/* Dump last span */
 	if (mark<bytes) {
-		rc=stringwriter_append(self, source+mark, bytes-mark);
-	} else {
-		rc=1;
+		stringwriter_append(self, source+mark, bytes-mark);
 	}
 
 	/* terminating null */
 	stringwriter_append_byte(self, 0);
 
-	return rc;
+	return !self->alloc_error;
 }
 
-int stringwriter_unpack_modified_utf8z(stringwriter_t *self, const char *source, size_t maxbytes)
+bool stringwriter_unpack_modified_utf8z(stringwriter_t *self, const char *source, size_t maxbytes)
 {
 	int i;
 	uint8_t c;
@@ -249,7 +275,7 @@ int stringwriter_unpack_modified_utf8z(stringwriter_t *self, const char *source,
 	/* reserve all needed space so we can just write direct to buffer
 	 * with no further bounds checks
 	 */
-	if (!stringwriter_ensure_capacity(self, maxbytes+1)) return 0;
+	VERIFY_ALLOC(self, maxbytes+1);
 
 	for (i=0; i<maxbytes; i++) {
 		c=bytes[i];
@@ -262,7 +288,7 @@ int stringwriter_unpack_modified_utf8z(stringwriter_t *self, const char *source,
 		}
 	}
 
-	return i+1;
+	return true;
 }
 
 bool stringwriter_append_jsonescape(stringwriter_t *self, const uint8_t *utf8_string, size_t len,
@@ -545,18 +571,21 @@ bool stringutil_escapejson(FILE* out, const uint8_t *utf8_string, size_t len,
 	return true;
 }
 
-int stringwriter_slurp_file(stringwriter_t *self, FILE *input_file)
+bool stringwriter_slurp_file(stringwriter_t *self, FILE *input_file)
 {
 	size_t r;
-
+	
 	for (;;) {
-		if (!stringwriter_ensure_capacity(self, 1024)) return 0;
-		r=fread(self->string+self->pos, 1, 1024, input_file);
+	   r=self->capacity - self->pos;
+	   if (r==0) r=1024;
+	   VERIFY_ALLOC(self, r);
+	   
+		r=fread(self->string+self->pos, 1, r, input_file);
 		if (r==0) {
 			if (feof(input_file)) break;
 			return 0;
 		}
 		self->pos+=r;
 	}
-	return 1;
+	return true;
 }
