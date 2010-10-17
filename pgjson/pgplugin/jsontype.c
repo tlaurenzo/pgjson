@@ -282,21 +282,33 @@ pgjson_jsonbinary_send(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(PG_GETARG_DATUM(0));
 }
 
-/*
- * returns the binary json content as json text with formatting set
- * to output in a fully round-trippable fashion.  This function is
- * intended to be used as a default text cast.  Additional formatting
- * options are available on other functions.  If the BSON is malformed,
- * this function returns NULL.  The rationale for this is that typically
- * this function will be invoked as part of a CAST to TEXT for data at rest.
- * If the data at rest is corrupted, then getting back a null value
- * instead of an error makes the situation recoverable.
+
+/**
+ * Returns json as JSON text.  Errors are raised.
+ * todo: Be more lenient about the encoding (not just ascii)
  */
-PG_FUNCTION_INFO_V1(pgjson_jsonbinary_to_text);
+PG_FUNCTION_INFO_V1(pgjson_json_asjsontext);
 Datum
-pgjson_jsonbinary_to_text(PG_FUNCTION_ARGS)
+pgjson_json_asjsontext(PG_FUNCTION_ARGS)
 {
-	void *vardata=PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(0));
+	void *vardata;
+	if (PG_ARGISNULL(0)) PG_RETURN_NULL();
+	vardata=PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(0));
+	return parse_bson_to_json_as_vardata(VARDATA_ANY(vardata), VARSIZE_ANY_EXHDR(vardata), true);
+}
+
+/**
+ * Returns json as JSON text.  Errors are ignored and null returned.
+ * todo: Be more lenient about the encoding (not just ascii)
+ * todo: errors are being returned as 'undefined'::json
+ */
+PG_FUNCTION_INFO_V1(pgjson_json_asjsontextsilent);
+Datum
+pgjson_json_asjsontextsilent(PG_FUNCTION_ARGS)
+{
+	void *vardata;
+	if (PG_ARGISNULL(0)) PG_RETURN_NULL();
+	vardata=PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(0));
 	return parse_bson_to_json_as_vardata(VARDATA_ANY(vardata), VARSIZE_ANY_EXHDR(vardata), false);
 }
 
@@ -304,10 +316,26 @@ pgjson_jsonbinary_to_text(PG_FUNCTION_ARGS)
  * parses text, producing a binary output.  on parse error, an exception
  * is raised
  */
-PG_FUNCTION_INFO_V1(pgjson_jsonbinary_from_text);
+PG_FUNCTION_INFO_V1(pgjson_json_parse);
 Datum
-pgjson_jsonbinary_from_text(PG_FUNCTION_ARGS)
+pgjson_json_parse(PG_FUNCTION_ARGS)
 {
-	void *vardata=PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(0));
+	void *vardata;
+	if (PG_ARGISNULL(0)) PG_RETURN_NULL();
+	vardata=PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(0));
 	return parse_json_to_bson_as_vardata(VARDATA_ANY(vardata), VARSIZE_ANY_EXHDR(vardata), true);
+}
+
+/*
+ * parses text, producing a binary output.  on parse error, returns null
+ * todo currently returning 'undefined'::json on output
+ */
+PG_FUNCTION_INFO_V1(pgjson_json_parsesilent);
+Datum
+pgjson_json_parsesilent(PG_FUNCTION_ARGS)
+{
+	void *vardata;
+	if (PG_ARGISNULL(0)) PG_RETURN_NULL();
+	vardata=PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(0));
+	return parse_json_to_bson_as_vardata(VARDATA_ANY(vardata), VARSIZE_ANY_EXHDR(vardata), false);
 }
