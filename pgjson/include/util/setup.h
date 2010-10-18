@@ -15,9 +15,11 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
 #define ATTR_PACKED_STRUCTURE __attribute__((__packed__))
+
 #endif

@@ -178,7 +178,7 @@ static bool add_int32(jsonvisitor_t *self, int32_t intvalue)
 }
 static bool add_int64(jsonvisitor_t *self, int64_t intvalue)
 {
-	fprintf(SELF->out, "JSON(add_int64): %lld\n", intvalue);
+	fprintf(SELF->out, "JSON(add_int64): " PRId64 "\n", intvalue);
 	return SELF->parent->vft->add_int32(SELF->parent, intvalue);
 }
 static bool add_double(jsonvisitor_t *self, double doublevalue)

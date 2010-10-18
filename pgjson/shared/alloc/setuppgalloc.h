@@ -1,5 +1,8 @@
 /* This header file is included as part of the compiler options */
 /* including postgres.h defines autoconf headers as well - so clear them here */
+/* Earliest possible point to signal _GNU_SOURCE.  TODO: Get this into configure */
+#define _GNU_SOURCE
+
 #include <postgres.h>
 
 /*#define PGMEMDEBUG*/

@@ -70,9 +70,9 @@ configurations:
 
 *	Mac OSX Snow Leopard 32bit x86
 *	Ubuntu 10.04 32bit x86 (gcc 4.4.3)
+*	Ubuntu 10.04 64bit x86 (gcc 4.4.3)
 
-As of yet, I have not tried it on a 64bit platform or anything big endian.  64bit support is probably easy as
-I've been mindful of it but just haven't pulled it down to a real 64bit system to verify.  In order to work
+In order to work
 on big endian systems, several byte swap macros in bsonconst.h will need to be defined properly.  On systems
 that only allow aligned memory access, READ_INT32 and READ_INT64 macros in bsonparser.c will need to be
 defined properly.
@@ -309,7 +309,7 @@ then it is a rootelement.  Otherwise, it is a document.
 			|	"\x09" e_name int64	         /* UTC datetime */
 			|	"\x0A" e_name	               /* Null value */
 			|	"\x0B" e_name cstring cstring	/* Regular expression */
-			|	"\x0C" e_name string (byte*12)	/* DBPointer Ñ Deprecated */
+			|	"\x0C" e_name string (byte*12)	/* DBPointer ï¿½ Deprecated */
 			|	"\x0D" e_name string	            /* JavaScript code */
 			|	"\x0E" e_name string	            /* Symbol */
 			|	"\x0F" e_name code_w_s	         /* JavaScript code w/ scope */

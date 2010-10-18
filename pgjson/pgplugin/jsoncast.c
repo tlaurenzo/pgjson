@@ -19,6 +19,7 @@
  *
  */
 #include "pgjson.h"
+#include "util/setup.h"
 #include <math.h>
 #include "json/bsonliteral.h"
 #include "json/bsonparser.h"
@@ -223,11 +224,11 @@ pgjson_json_to_text(PG_FUNCTION_ARGS)
 		textdata=cstring_to_vartext(scratch);
 		break;
 	case BSONTYPE_INT64:
-		sprintf(scratch, "%lld", inputvalue.value.int64_value);
+		sprintf(scratch, PRId64, inputvalue.value.int64_value);
 		textdata=cstring_to_vartext(scratch);
 		break;
 	case BSONTYPE_TIMESTAMP:
-		sprintf(scratch, "%lld", inputvalue.value.datetime_value);
+		sprintf(scratch, PRId64, inputvalue.value.datetime_value);
 		textdata=cstring_to_vartext(scratch);
 		break;
 	}

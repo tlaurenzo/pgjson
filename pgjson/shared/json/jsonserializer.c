@@ -264,7 +264,7 @@ static bool add_int64(jsonvisitor_t *self, int64_t intvalue)
 	DECLARATIONS;
 	INTRODUCE_VALUE;
 
-	CHECKED_fprintf("%lld", intvalue);
+	CHECKED_fprintf(PRId64, intvalue);
 	return true;
 }
 static bool add_double(jsonvisitor_t *self, double doublevalue)
