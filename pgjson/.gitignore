@@ -13,9 +13,9 @@
 /pgplugin/pgjson.sql
 
 # autoheader
-/include/stamp-h1
-/include/pgjson_config.h
-/include/pgjson_config.h.in
+/shared/include/stamp-h1
+/shared/include/pgjson_config.h
+/shared/include/pgjson_config.h.in
 
 # All generated makefiles
 /Makefile.in

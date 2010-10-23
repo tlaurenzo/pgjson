@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I../include -I../include $(POSTGRESQL_SERVER_CFLAGS)
+AM_CPPFLAGS = -Iinclude $(POSTGRESQL_SERVER_CFLAGS)
 
 noinst_LTLIBRARIES = libjsoncalloc.la libjsonpgalloc.la
 bin_PROGRAMS = jsontool jsonquery
