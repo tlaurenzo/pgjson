@@ -18,7 +18,8 @@ LIB_SOURCE_FILES = \
 	json/jsonoutputter.c \
 	json/bsonparser.c \
 	json/jsonpath.c \
-	json/bsonliteral.c
+	json/bsonliteral.c \
+	json/jsonbinary.c
 
 
 libjsoncalloc_la_CFLAGS = -include alloc/setupcalloc.h
