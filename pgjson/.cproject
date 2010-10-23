@@ -53,6 +53,13 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<sourceEntries>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="shared/include"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="shared/alloc"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="shared/json"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="shared/util"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="pgplugin"/>
+					</sourceEntries>
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="scannerConfiguration">
