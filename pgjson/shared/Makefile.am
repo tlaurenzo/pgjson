@@ -1,7 +1,7 @@
 AM_CPPFLAGS = -Iinclude $(POSTGRESQL_SERVER_CFLAGS)
 
 noinst_LTLIBRARIES = libjsoncalloc.la libjsonpgalloc.la
-bin_PROGRAMS = jsontool jsonquery
+bin_PROGRAMS = jsontool jsonquery testparsejson
 
 
 LIB_SOURCE_FILES = \
@@ -22,11 +22,11 @@ LIB_SOURCE_FILES = \
 	json/jsonbinary.c
 
 
-libjsoncalloc_la_CFLAGS = -include alloc/setupcalloc.h
+libjsoncalloc_la_CFLAGS = -O3 -include alloc/setupcalloc.h
 libjsoncalloc_la_LDFLAGS = -static
 libjsoncalloc_la_SOURCES = $(LIB_SOURCE_FILES)
 
-libjsonpgalloc_la_CFLAGS = -include alloc/setuppgalloc.h
+libjsonpgalloc_la_CFLAGS = -O3 -include alloc/setuppgalloc.h
 libjsonpgalloc_la_LDFLAGS = -shared
 libjsonpgalloc_la_SOURCES = $(LIB_SOURCE_FILES)
 	
@@ -37,6 +37,7 @@ jsontool_LDADD = libjsoncalloc.la
 jsonquery_SOURCES = json/jsonquery.c
 jsonquery_LDADD = libjsoncalloc.la
 
+testparsejson_SOURCES = json/testparsejson.c
 
 #### Local rules ####
 # Lex and yacc rules
