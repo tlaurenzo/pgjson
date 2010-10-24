@@ -313,4 +313,9 @@ typedef struct {
 void jsonbbuilder_init(jsonbbuilder_t *builder, stringwriter_t *outputbuffer);
 
 
+//// Byte swapping
+void jsonb_swap_to_external(uint8_t *buffer, size_t len);
+void jsonb_swap_from_external(uint8_t *buffer, size_t len);
+
+
 #endif
