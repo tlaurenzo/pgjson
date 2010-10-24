@@ -147,4 +147,170 @@
  * internal representations will likely be native and external, big-endian.  As such, byte swap
  * functions are defined for taking an entire stream from native to external (big endian)
  * and vica-versa.
+ *
  */
+#ifndef __JSONBINARY_H__
+#define __JSONBINARY_H__
+
+#include "json/jsonaccess.h"
+#include "util/stringutil.h"
+
+typedef enum {
+	JSONB_OBJECT=0x0,
+	JSONB_ARRAY=0x1,
+	JSONB_STRING=0x2,
+	JSONB_INTEGER=0x3,
+	JSONB_FLOAT=0x4,
+	JSONB_DECIMAL=0x5,
+	JSONB_BOOLTRUE=0x6,
+	JSONB_BOOLFALSE=0x7,
+	JSONB_NULL=0x8,
+	JSONB_UNDEFINED=0x9,
+	JSONB_BINARY_STRING=0xa,
+	JSONB_DATE=0xb
+} jsonbtype_t;
+
+typedef enum {
+	JSONB_CONTAINER_NONE,
+	JSONB_CONTAINER_OBJECT,
+	JSONB_CONTAINER_ARRAY
+} jsonbcontainer_t;
+
+typedef struct {
+	int32_t exponent;
+
+	/**
+	 * Number of bytes in the significand
+	 */
+	uint32_t significand_length;
+
+	/**
+	 * Pointer the significand bytes
+	 */
+	uint8_t *significand;
+} jsonbdecimal_t;
+
+typedef struct {
+	/**
+	 * Decoded type
+	 */
+	jsonbtype_t type;
+
+	/**
+	 * Decoded length
+	 */
+	uint32_t length;
+
+	union {
+		/**
+		 * JSONB_STRING UTF-8 stream of length bytes
+		 */
+		uint8_t *stringvalue;
+
+		/**
+		 * JSONB_BINARY.  length bytes.
+		 */
+		uint8_t *binaryvalue;
+
+		/**
+		 * JSONB_INTEGER, length==4
+		 */
+		int32_t  int32value;
+
+		/**
+		 * JSONB_INTEGER, length==8
+		 */
+		int64_t  int64value;
+
+		/**
+		 * JSONB_FLOAT, length==4
+		 */
+		float    singlefloatvalue;
+
+		/**
+		 * JSONB_FLOAT, length==8
+		 */
+		double   doublefloatvalue;
+
+		/**
+		 * JSONB_DECIMAL
+		 */
+		jsonbdecimal_t decimalvalue;
+	};
+} jsonbvalue_t;
+
+typedef struct jsonbpointer_t {
+	/**
+	 * The type of the container that owns this value.
+	 * Controls iteration
+	 */
+	jsonbcontainer_t container_type;
+
+	/**
+	 * If pointing to an object pair, then label points to the
+	 * modified UTF8-z string of the label.
+	 */
+	char *label;
+
+	/**
+	 * Pointer to the start of this value (points to the typespec)
+	 */
+	uint8_t *start;
+
+	/**
+	 * If !null, then points to the next legal value in the
+	 * container.
+	 */
+	uint8_t *next;
+
+	/**
+	 * Pointer to the limit of the container.
+	 */
+	uint8_t *limit;
+
+	/**
+	 * Pointer to the DATA area.  This may equal limit if
+	 * there is no DATA.
+	 */
+	uint8_t *data;
+
+	/**
+	 * Pointer to the parent value structure.  Only used by
+	 * recursive iteration functions.  Otherwise, not valid.
+	 */
+	struct jsonbpointer_t *parent;
+
+	/**
+	 * The value being pointed to
+	 */
+	jsonbvalue_t value;
+} jsonbpointer_t;
+
+//// Binary read functions
+bool jsonbpointer_load(jsonbpointer_t *jsp, uint8_t *source, size_t len);
+bool jsonbpointer_next(jsonbpointer_t *jsp);
+bool jsonbpointer_firstchild(jsonbpointer_t *container, jsonbpointer_t *child);
+
+//// Serialize a jsonbpointer to an event stream
+bool jsonbpointer_visit(jsonbpointer_t *jsp, jsonvisitor_t *visitor);
+
+//// Construct a jsonb stream from an event stream
+typedef struct {
+	/**
+	 * first member as a vft makes this a valid visitor
+	 */
+	jsonvisitor_vft const *vft;
+
+	/**
+	 * Output buffer for accumulating the structure
+	 */
+	stringwriter_t *outputbuffer;
+} jsonbbuilder_t;
+
+/**
+ * Initialize the builder
+ */
+void jsonbbuilder_init(jsonbbuilder_t *builder, stringwriter_t *outputbuffer);
+
+
+#endif
