@@ -1,10 +1,35 @@
 /**
- * parsejson.inc.c
+ * jsonlex.inc.c
  *
  * Provide the guts of a JSON parser as an includable C file.
- * The interface to the parser is via pre-processor defines.
  */
 #include "jsonlex.h"
+
+
+/**
+ * JSONLEX_GETC
+ * Define the macro that reads a character from the input stream.
+ * The character should be returned as an unsigned char converted to an
+ * int.  -1 should be returned on EOF.
+ *
+ * This macro has access to the lexstate variable (jsonlex_state_arg)
+ */
+#ifndef JSONLEX_GETC
+#error JSONLEX_GETC must be defined prior to inclusion
+#endif
+/**
+ * JSONLEX_UNGETC
+ * Define the macro that ungets a character from the input stream.
+ * Note that this will only ever be called with the same character
+ * as returned by the previous call to JSONLEX_GETC.  This allows
+ * read-only buffers to ignore the character and just decrement
+ * a position.
+ *
+ * This macro has access to the lexstate variable (jsonlex_state_arg)
+ */
+#ifndef JSONLEX_UNGETC
+#error JSONLEX_UNGETC must be defined prior to inclusion
+#endif
 
 
 /**
@@ -211,6 +236,7 @@ JSON_FDECLP jsonlex_token_t jsonlex_next_token(jsonlex_state_arg lexstate)
 				/* escape */
 				if (charin=='\\') {
 					/* process escape */
+					/* todo */
 					continue;
 				}
 

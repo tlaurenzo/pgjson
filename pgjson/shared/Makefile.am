@@ -37,6 +37,7 @@ jsontool_LDADD = libjsoncalloc.la
 jsonquery_SOURCES = json/jsonquery.c
 jsonquery_LDADD = libjsoncalloc.la
 
+testparsejson_CFLAGS = -O3
 testparsejson_SOURCES = json/testparsejson.c
 
 #### Local rules ####

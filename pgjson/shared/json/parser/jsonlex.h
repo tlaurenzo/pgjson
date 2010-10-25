@@ -1,3 +1,15 @@
+/**
+ * jsonlex.h
+ *
+ * A JSON lexer, configurable via preprocessor definitions.  This file, along
+ * with jsonlex.inc.c and jsonlex.tab.c provide the "guts" of a lexer that
+ * is configurable via pre-processor definitions.  By default, it should
+ * be included statically in an implementation module.  Therefore, everything
+ * is declared statically.
+ *
+ * If using multiple lexers, it would be beneficial to link the JSONLEX_CC_TABLE
+ * separately as an extern to save 1kb per instance.
+ */
 #ifndef __JSONLEX_H__
 #define __JSONLEX_H__
 
@@ -60,31 +72,6 @@
  */
 #ifndef JSON_FWDDDECLP
 #define JSON_FWDDDECLP JSON_DDECLP
-#endif
-
-/**
- * JSONLEX_GETC
- * Define the macro that reads a character from the input stream.
- * The character should be returned as an unsigned char converted to an
- * int.  -1 should be returned on EOF.
- *
- * This macro has access to the lexstate variable (jsonlex_state_arg)
- */
-#ifndef JSONLEX_GETC
-#error JSONLEX_GETC must be defined prior to inclusion
-#endif
-/**
- * JSONLEX_UNGETC
- * Define the macro that ungets a character from the input stream.
- * Note that this will only ever be called with the same character
- * as returned by the previous call to JSONLEX_GETC.  This allows
- * read-only buffers to ignore the character and just decrement
- * a position.
- *
- * This macro has access to the lexstate variable (jsonlex_state_arg)
- */
-#ifndef JSONLEX_UNGETC
-#error JSONLEX_UNGETC must be defined prior to inclusion
 #endif
 
 typedef enum {
@@ -172,5 +159,11 @@ JSON_FWDDDECLP const jsonlex_charclass_t JSONLEX_CC_TABLE[256];
 #define JSONLEX_CC_ATTR_IDCHAR_CONT		((jsonlex_charclass_t)0x100)
 #define JSONLEX_CC_ATTR_DIGIT			((jsonlex_charclass_t)0x200)
 #define JSONLEX_CC_ATTR_INT_SEP			((jsonlex_charclass_t)0x400)
+
+/**** Function forwards ***/
+JSON_FDECLP jsonlex_token_t jsonlex_next_token(jsonlex_state_arg lexstate);
+JSON_FDECLP void jsonlex_init(jsonlex_state_arg lexstate);
+JSON_FDECLP void jsonlex_destroy(jsonlex_state_arg lexstate);
+
 
 #endif
