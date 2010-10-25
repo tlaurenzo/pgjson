@@ -34,6 +34,9 @@ void PRINT_COUNTED_STRING(char *fmt, uint8_t *mem, size_t len)
 #define JSONPARSE_ACTION_VALUE_STRING(s, len) \
 		PRINT_COUNTED_STRING("'%s'\n", s, len)
 
+#define JSONPARSE_ACTION_ERROR(msg, gottoken) \
+	printf("ERROR: %s (got %s) at %s (line %d)\n", msg, jsonlex_token_str(gottoken), __FILE__, __LINE__)
+
 #include "parser/jsonlex.inc.c"
 #include "parser/jsonlex.tab.c"
 #include "parser/jsonparse.inc.c"

@@ -31,28 +31,25 @@ JSON_FDECLP bool jsonparse_object(jsonparseinfo_arg parsestate)
 	JSONPARSE_ACTION_OBJECT_START();
 	#endif
 
+	token=jsonlex_next_token(&parsestate->lexstate);
+	if (token==jsonlex_rbrace) {
+		/* end of object (will only hit this for empty object) */
+		#ifdef JSONPARSE_ACTION_OBJECT_END
+		JSONPARSE_ACTION_OBJECT_END();
+		#endif
+		return true;
+	}
+
 	for (;;) {
-		token=jsonlex_next_token(&parsestate->lexstate);
-
 		/* token 1: either end the object or label the field */
-		switch (token) {
-		case jsonlex_rbrace:
-			/* end of object (will only hit this for empty object) */
-			#ifdef JSONPARSE_ACTION_OBJECT_END
-			JSONPARSE_ACTION_OBJECT_END();
-			#endif
-			return true;
-
-		case jsonlex_identifier:
-		case jsonlex_string:
+		if (token==jsonlex_identifier||token==jsonlex_string) {
 			/* treat either a string or identifier as a field label */
 			#ifdef JSONPARSE_ACTION_OBJECT_LABEL
 			JSONPARSE_ACTION_OBJECT_LABEL(parsestate->lexstate.buffer, parsestate->lexstate.buffer_pos);
 			#endif
-			break;
-		default:
+		} else {
 			#ifdef JSONPARSE_ACTION_ERROR
-			JSONPARSE_ACTION_ERROR("Expected object field or end of object", token);
+			JSONPARSE_ACTION_ERROR("Expected object element", token);
 			#endif
 			return false;
 		}
@@ -67,7 +64,8 @@ JSON_FDECLP bool jsonparse_object(jsonparseinfo_arg parsestate)
 		}
 
 		/* token 3: value */
-		if (!jsonparse_value(parsestate, jsonlex_next_token(&parsestate->lexstate))) {
+		token=jsonlex_next_token(&parsestate->lexstate);
+		if (!jsonparse_value(parsestate, token)) {
 			/* error already set */
 			return false;
 		}
@@ -75,6 +73,7 @@ JSON_FDECLP bool jsonparse_object(jsonparseinfo_arg parsestate)
 		/* token 4: either comma (continue loop) or rbrace (end object) */
 		token=jsonlex_next_token(&parsestate->lexstate);
 		if (token==jsonlex_comma) {
+			token=jsonlex_next_token(&parsestate->lexstate);
 			continue;
 		} else if (token==jsonlex_rbrace) {
 			#ifdef JSONPARSE_ACTION_OBJECT_END
@@ -205,6 +204,9 @@ JSON_FDECLP bool jsonparse_value(jsonparseinfo_arg parsestate, jsonlex_token_t t
 		#endif
 		return true;
 	default:
+		#ifdef JSONPARSE_ACTION_ERROR
+		JSONPARSE_ACTION_ERROR("Expected legal value", token);
+		#endif
 		return false;
 	}
 }
