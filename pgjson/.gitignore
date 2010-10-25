@@ -1,6 +1,7 @@
 # Binaries
 /shared/jsontool
 /shared/jsonquery
+/shared/testparsejson
 
 # Generated sources
 /shared/jsonparser.tab.h
