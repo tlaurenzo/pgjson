@@ -1,10 +1,6 @@
-#include "transcode_jsontext.h"
 #include "jsonutil.h"
 
 #define JSONLEX_TRACK_POSITION 0
-#define JSONLEX_EXTRA_DECL \
-	uint8_t *source; \
-	uint8_t *sourcelimit;
 
 #define JSONPARSE_EXTRA_DECL \
 	bool pretty; \
@@ -21,10 +17,6 @@
 #define JSONOUT_PRETTY_PRINT 1
 #endif
 
-
-/* IO */
-#define JSONLEX_GETC() (lexstate->source<lexstate->sourcelimit ? *(lexstate->source++) : -1)
-#define JSONLEX_UNGETC(c) (lexstate->source-=1)
 
 /* actions */
 #define JSONPARSE_ACTION_OBJECT_START() {\
@@ -109,9 +101,7 @@ bool json_transcode_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t *dest
 	jsonparseinfo_t parseinfo;
 	
 	/* init the lexer */
-	jsonlex_init(&parseinfo.lexstate);
-	parseinfo.lexstate.source=source;
-	parseinfo.lexstate.sourcelimit=source+sourcelen;
+	jsonlex_init_io(&parseinfo.lexstate, source, sourcelen);
 	parseinfo.dest=dest;
 	parseinfo.error_message[0]=0;
 	parseinfo.pretty=indent!=0;

@@ -18,4 +18,10 @@
  */
 bool json_escape_string(dynbuffer_t *dest, const uint8_t *source, size_t len, bool ascii_only, uint8_t quote_char);
 
+/**
+ * Parse source and transcode it to JSON text in the dest buffer.
+ * @return true on success, false on error
+ */
+bool json_transcode_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t *dest, const char *indent);
+
 #endif

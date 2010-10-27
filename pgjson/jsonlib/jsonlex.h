@@ -48,6 +48,26 @@
 #endif
 
 /**
+ * JSONLEX_DISABLE_IO
+ * Define this macro to bring your own IO.  In this case, you must define JSONLEX_IO_DECL
+ * to expand as necessary into the struct and JSONLEX_GETC and JSONLEX_UNGETC.  The standard
+ * IO is a buffer of source and sourcelimit and macros to read characters from it.
+ */
+#ifndef JSONLEX_DISABLE_IO
+#define JSONLEX_IO_DECL \
+	uint8_t *source; \
+	uint8_t *sourcelimit;
+#ifndef JSONLEX_GETC
+#define JSONLEX_GETC() (lexstate->source<lexstate->sourcelimit ? *(lexstate->source++) : -1)
+#endif
+
+#ifndef JSONLEX_UNGETC
+#define JSONLEX_UNGETC(c) (lexstate->source-=1)
+#endif
+#endif
+
+
+/**
  * JSON_DECLP
  * Prefix to include on function declarations.
  * Defaults to static
@@ -116,6 +136,11 @@ typedef struct {
 
 	/* additional user-defined declarations */
 	JSONLEX_EXTRA_DECL
+
+	/* include IO declarations */
+	#ifdef JSONLEX_IO_DECL
+	JSONLEX_IO_DECL
+	#endif
 } jsonlex_state_t, *jsonlex_state_arg;
 
 /**
@@ -164,6 +189,9 @@ extern const jsonlex_charclass_t JSONLEX_CC_TABLE[256];
 /**** Function forwards ***/
 JSON_FDECLP jsonlex_token_t jsonlex_next_token(jsonlex_state_arg lexstate);
 JSON_FDECLP void jsonlex_init(jsonlex_state_arg lexstate);
+#ifndef JSONLEX_DISABLE_IO
+	JSON_FDECLP void jsonlex_init_io(jsonlex_state_arg lexstate, uint8_t *source, size_t len);
+#endif
 JSON_FDECLP void jsonlex_destroy(jsonlex_state_arg lexstate);
 
 

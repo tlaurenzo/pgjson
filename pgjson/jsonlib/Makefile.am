@@ -5,7 +5,7 @@ bin_PROGRAMS = testparsejson
 testparsejson_CFLAGS = 
 testparsejson_SOURCES = \
 	testparsejson.c \
-	transcode_jsontext.c \
+	json_transcode_to_json.c \
 	dynbuffer.c \
 	jsonlex.tab.c \
 	jsonutil.c

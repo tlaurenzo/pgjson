@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 #include "dynbuffer.h"
-#include "transcode_jsontext.h"
+#include "jsonutil.h"
 
 int main(int argc, char **argv)
 {

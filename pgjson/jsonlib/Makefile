@@ -51,7 +51,7 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_testparsejson_OBJECTS = testparsejson-testparsejson.$(OBJEXT) \
-	testparsejson-transcode_jsontext.$(OBJEXT) \
+	testparsejson-json_transcode_to_json.$(OBJEXT) \
 	testparsejson-dynbuffer.$(OBJEXT) \
 	testparsejson-jsonlex.tab.$(OBJEXT) \
 	testparsejson-jsonutil.$(OBJEXT)
@@ -193,7 +193,7 @@ AM_CPPFLAGS = $(POSTGRESQL_SERVER_CFLAGS)
 testparsejson_CFLAGS = 
 testparsejson_SOURCES = \
 	testparsejson.c \
-	transcode_jsontext.c \
+	json_transcode_to_json.c \
 	dynbuffer.c \
 	jsonlex.tab.c \
 	jsonutil.c
@@ -270,10 +270,10 @@ distclean-compile:
 	-rm -f *.tab.c
 
 include ./$(DEPDIR)/testparsejson-dynbuffer.Po
+include ./$(DEPDIR)/testparsejson-json_transcode_to_json.Po
 include ./$(DEPDIR)/testparsejson-jsonlex.tab.Po
 include ./$(DEPDIR)/testparsejson-jsonutil.Po
 include ./$(DEPDIR)/testparsejson-testparsejson.Po
-include ./$(DEPDIR)/testparsejson-transcode_jsontext.Po
 
 .c.o:
 	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -310,19 +310,19 @@ testparsejson-testparsejson.obj: testparsejson.c
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testparsejson_CFLAGS) $(CFLAGS) -c -o testparsejson-testparsejson.obj `if test -f 'testparsejson.c'; then $(CYGPATH_W) 'testparsejson.c'; else $(CYGPATH_W) '$(srcdir)/testparsejson.c'; fi`
 
-testparsejson-transcode_jsontext.o: transcode_jsontext.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testparsejson_CFLAGS) $(CFLAGS) -MT testparsejson-transcode_jsontext.o -MD -MP -MF "$(DEPDIR)/testparsejson-transcode_jsontext.Tpo" -c -o testparsejson-transcode_jsontext.o `test -f 'transcode_jsontext.c' || echo '$(srcdir)/'`transcode_jsontext.c; \
-	then mv -f "$(DEPDIR)/testparsejson-transcode_jsontext.Tpo" "$(DEPDIR)/testparsejson-transcode_jsontext.Po"; else rm -f "$(DEPDIR)/testparsejson-transcode_jsontext.Tpo"; exit 1; fi
-#	source='transcode_jsontext.c' object='testparsejson-transcode_jsontext.o' libtool=no \
+testparsejson-json_transcode_to_json.o: json_transcode_to_json.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testparsejson_CFLAGS) $(CFLAGS) -MT testparsejson-json_transcode_to_json.o -MD -MP -MF "$(DEPDIR)/testparsejson-json_transcode_to_json.Tpo" -c -o testparsejson-json_transcode_to_json.o `test -f 'json_transcode_to_json.c' || echo '$(srcdir)/'`json_transcode_to_json.c; \
+	then mv -f "$(DEPDIR)/testparsejson-json_transcode_to_json.Tpo" "$(DEPDIR)/testparsejson-json_transcode_to_json.Po"; else rm -f "$(DEPDIR)/testparsejson-json_transcode_to_json.Tpo"; exit 1; fi
+#	source='json_transcode_to_json.c' object='testparsejson-json_transcode_to_json.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testparsejson_CFLAGS) $(CFLAGS) -c -o testparsejson-transcode_jsontext.o `test -f 'transcode_jsontext.c' || echo '$(srcdir)/'`transcode_jsontext.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testparsejson_CFLAGS) $(CFLAGS) -c -o testparsejson-json_transcode_to_json.o `test -f 'json_transcode_to_json.c' || echo '$(srcdir)/'`json_transcode_to_json.c
 
-testparsejson-transcode_jsontext.obj: transcode_jsontext.c
-	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testparsejson_CFLAGS) $(CFLAGS) -MT testparsejson-transcode_jsontext.obj -MD -MP -MF "$(DEPDIR)/testparsejson-transcode_jsontext.Tpo" -c -o testparsejson-transcode_jsontext.obj `if test -f 'transcode_jsontext.c'; then $(CYGPATH_W) 'transcode_jsontext.c'; else $(CYGPATH_W) '$(srcdir)/transcode_jsontext.c'; fi`; \
-	then mv -f "$(DEPDIR)/testparsejson-transcode_jsontext.Tpo" "$(DEPDIR)/testparsejson-transcode_jsontext.Po"; else rm -f "$(DEPDIR)/testparsejson-transcode_jsontext.Tpo"; exit 1; fi
-#	source='transcode_jsontext.c' object='testparsejson-transcode_jsontext.obj' libtool=no \
+testparsejson-json_transcode_to_json.obj: json_transcode_to_json.c
+	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testparsejson_CFLAGS) $(CFLAGS) -MT testparsejson-json_transcode_to_json.obj -MD -MP -MF "$(DEPDIR)/testparsejson-json_transcode_to_json.Tpo" -c -o testparsejson-json_transcode_to_json.obj `if test -f 'json_transcode_to_json.c'; then $(CYGPATH_W) 'json_transcode_to_json.c'; else $(CYGPATH_W) '$(srcdir)/json_transcode_to_json.c'; fi`; \
+	then mv -f "$(DEPDIR)/testparsejson-json_transcode_to_json.Tpo" "$(DEPDIR)/testparsejson-json_transcode_to_json.Po"; else rm -f "$(DEPDIR)/testparsejson-json_transcode_to_json.Tpo"; exit 1; fi
+#	source='json_transcode_to_json.c' object='testparsejson-json_transcode_to_json.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testparsejson_CFLAGS) $(CFLAGS) -c -o testparsejson-transcode_jsontext.obj `if test -f 'transcode_jsontext.c'; then $(CYGPATH_W) 'transcode_jsontext.c'; else $(CYGPATH_W) '$(srcdir)/transcode_jsontext.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testparsejson_CFLAGS) $(CFLAGS) -c -o testparsejson-json_transcode_to_json.obj `if test -f 'json_transcode_to_json.c'; then $(CYGPATH_W) 'json_transcode_to_json.c'; else $(CYGPATH_W) '$(srcdir)/json_transcode_to_json.c'; fi`
 
 testparsejson-dynbuffer.o: dynbuffer.c
 	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testparsejson_CFLAGS) $(CFLAGS) -MT testparsejson-dynbuffer.o -MD -MP -MF "$(DEPDIR)/testparsejson-dynbuffer.Tpo" -c -o testparsejson-dynbuffer.o `test -f 'dynbuffer.c' || echo '$(srcdir)/'`dynbuffer.c; \

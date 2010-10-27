@@ -102,6 +102,15 @@ JSON_FDECLP void jsonlex_init(jsonlex_state_arg lexstate)
 	#endif
 }
 
+#ifndef JSONLEX_DISABLE_IO
+JSON_FDECLP void jsonlex_init_io(jsonlex_state_arg lexstate, uint8_t *source, size_t len)
+{
+	jsonlex_init(lexstate);
+	lexstate->source=source;
+	lexstate->sourcelimit=source+len;
+}
+#endif
+
 JSON_FDECLP void jsonlex_destroy(jsonlex_state_arg lexstate)
 {
 	#if JSONLEX_STATICBUFFER_SIZE > 0
