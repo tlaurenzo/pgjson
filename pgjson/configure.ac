@@ -52,6 +52,6 @@ AC_SUBST([PGJSON_MICRO_VERSION])
 dnl Implement opening stream against memory buffer on bsd (funopen) or linux fopencookie
 AC_CHECK_FUNCS([funopen fopencookie])
 
-AC_CONFIG_FILES([Makefile shared/Makefile pgplugin/Makefile])
+AC_CONFIG_FILES([Makefile jsonlib/Makefile shared/Makefile pgplugin/Makefile])
 AC_OUTPUT
 

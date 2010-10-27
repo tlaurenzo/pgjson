@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = shared pgplugin
+SUBDIRS = jsonlib shared pgplugin
 
 
 psql: all

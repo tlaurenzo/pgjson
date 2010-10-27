@@ -210,7 +210,7 @@ bool stringwriter_append_codepoint(stringwriter_t *self, uint32_t codepoint)
 		codepoints[0]=0xf0 | ((codepoint>>18)&0x7);
 		codepoints[1]=0x80 | ((codepoint>>12)&0x3f);
 		codepoints[2]=0x80 | ((codepoint>>6)&0x3f);
-		codepoints[2]=0x80 | ((codepoint&0x3f));
+		codepoints[3]=0x80 | ((codepoint&0x3f));
 		size=4;
 	} else {
 		// Unicode replacement char uFFFD as UTF-8
