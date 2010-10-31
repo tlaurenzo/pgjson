@@ -30,8 +30,8 @@ extern void dynbuffer_realloc(dynbuffer_t *buffer, size_t needed_capacity);
 	
 #define dynbuffer_clear(dynbuffer) (dynbuffer)->pos=0;
 
-#define dynbuffer_ensure(dynbuffer, needed_capacity) \
-	if ((dynbuffer)->capacity<needed_capacity) dynbuffer_realloc(dynbuffer, needed_capacity);
+#define dynbuffer_ensure(dynbuffer, needed_capacity) {\
+	if ((dynbuffer)->capacity<needed_capacity) dynbuffer_realloc(dynbuffer, needed_capacity); }
 	
 #define dynbuffer_ensure_delta(dynbuffer, more_capacity) \
 	dynbuffer_ensure(dynbuffer, (dynbuffer)->pos+more_capacity);
@@ -40,7 +40,8 @@ extern void dynbuffer_realloc(dynbuffer_t *buffer, size_t needed_capacity);
 	((dynbuffer)->contents-(dynbuffer)->allocheader)
 
 #define dynbuffer_append(dynbuffer, source, bytes) \
-	do { dynbuffer_ensure_delta(dynbuffer, bytes); \
+	do { \
+	  dynbuffer_ensure_delta(dynbuffer, bytes); \
 	  memcpy((dynbuffer)->contents+(dynbuffer)->pos, source, bytes); \
 	  (dynbuffer)->pos+=bytes;\
 	} while(0)

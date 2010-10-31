@@ -35,6 +35,12 @@ bool json_transcode_json_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t 
 bool json_transcode_json_to_binary(uint8_t *source, size_t sourcelen, dynbuffer_t *dest);
 
 /**
+ * Transcode binary to text json into the dest buffer.
+ * @return true on success, false on error
+ */
+bool json_transcode_binary_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t *dest);
+
+/**
  * Validate json
  * @return true if valid
  */

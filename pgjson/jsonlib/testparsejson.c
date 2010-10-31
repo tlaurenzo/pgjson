@@ -23,14 +23,13 @@ int main(int argc, char **argv)
 
 	dynbuffer_read_file(&source, stdin);
 
-	if (!json_transcode_json_to_binary(source.contents, source.pos, &dest)) {
+	if (!json_transcode_binary_to_json(source.contents, source.pos, &dest)) {
+	//if (!json_transcode_json_to_binary(source.contents, source.pos, &dest)) {
 		printf("Error transcoding: %s\n", (char*)dest.contents);
 		return 1;
 	}
 
-	hexdump(stdout, dest.contents, dest.pos);
-
-	fprintf(stdout, "\n");
+	fwrite(dest.contents, dest.pos, 1, stdout);
 
 	return 0;
 }
