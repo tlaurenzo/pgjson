@@ -24,7 +24,7 @@ bool json_escape_string(dynbuffer_t *dest, const uint8_t *source, size_t len, bo
  * message.
  * @return true on success, false on error
  */
-bool json_transcode_json_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t *dest, const char *indent);
+bool json_transcode_json_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t *dest);
 
 /**
  * Transcode json text to binary in the dest buffer.
@@ -33,5 +33,11 @@ bool json_transcode_json_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t 
  * @return true on success, false on error
  */
 bool json_transcode_json_to_binary(uint8_t *source, size_t sourcelen, dynbuffer_t *dest);
+
+/**
+ * Validate json
+ * @return true if valid
+ */
+bool json_validate_json(uint8_t *source, size_t sourcelen);
 
 #endif

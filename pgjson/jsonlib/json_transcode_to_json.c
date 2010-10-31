@@ -93,7 +93,7 @@ static void jsonout_indent(dynbuffer_t *dest, int level, const char *indent)
 #include "jsonlex.inc.c"
 #include "jsonparse.inc.c"
 
-bool json_transcode_json_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t *dest, const char *indent)
+bool json_transcode_json_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t *dest)
 {
 	bool result;
 	jsonparseinfo_t parseinfo;
@@ -102,8 +102,8 @@ bool json_transcode_json_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t 
 	jsonlex_init_io(&parseinfo.lexstate, source, sourcelen);
 	parseinfo.dest=dest;
 	parseinfo.error_message[0]=0;
-	parseinfo.pretty=indent!=0;
-	parseinfo.indent=indent;
+	parseinfo.pretty=false;
+	parseinfo.indent=0;
 	parseinfo.level=0;
 
 	result=jsonparse(&parseinfo);
