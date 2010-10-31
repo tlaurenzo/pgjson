@@ -49,7 +49,12 @@ extern void dynbuffer_realloc(dynbuffer_t *buffer, size_t needed_capacity);
 	do { dynbuffer_ensure_delta(dynbuffer, 1); \
 	  (dynbuffer)->contents[(dynbuffer)->pos++]=byte; \
 	} while(0)
-	 
+
+#define dynbuffer_append_byte_nocheck(dynbuffer, byte) \
+	do { \
+	(dynbuffer)->contents[(dynbuffer)->pos++]=byte; \
+	} while (0)
+
 /*** Utility functions ***/
 bool dynbuffer_read_file(dynbuffer_t *buffer, FILE *input);
 

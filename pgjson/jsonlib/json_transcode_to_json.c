@@ -1,7 +1,5 @@
 #include "jsonutil.h"
 
-#define JSONLEX_TRACK_POSITION 0
-
 #define JSONPARSE_EXTRA_DECL \
 	bool pretty; \
 	const char *indent; \
@@ -95,7 +93,7 @@ static void jsonout_indent(dynbuffer_t *dest, int level, const char *indent)
 #include "jsonlex.inc.c"
 #include "jsonparse.inc.c"
 
-bool json_transcode_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t *dest, const char *indent)
+bool json_transcode_json_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t *dest, const char *indent)
 {
 	bool result;
 	jsonparseinfo_t parseinfo;

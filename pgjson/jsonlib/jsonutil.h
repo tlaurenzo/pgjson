@@ -20,8 +20,18 @@ bool json_escape_string(dynbuffer_t *dest, const uint8_t *source, size_t len, bo
 
 /**
  * Parse source and transcode it to JSON text in the dest buffer.
+ * On error, the dest buffer is filled with a zero terminated error
+ * message.
  * @return true on success, false on error
  */
-bool json_transcode_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t *dest, const char *indent);
+bool json_transcode_json_to_json(uint8_t *source, size_t sourcelen, dynbuffer_t *dest, const char *indent);
+
+/**
+ * Transcode json text to binary in the dest buffer.
+ * On error, the dest buffer is filled with a zero terminated error
+ * message.
+ * @return true on success, false on error
+ */
+bool json_transcode_json_to_binary(uint8_t *source, size_t sourcelen, dynbuffer_t *dest);
 
 #endif

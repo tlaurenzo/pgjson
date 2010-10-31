@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "hexdump.h"
 #include "dynbuffer.h"
 #include "jsonutil.h"
 
@@ -22,12 +23,12 @@ int main(int argc, char **argv)
 
 	dynbuffer_read_file(&source, stdin);
 
-	if (!json_transcode_to_json(source.contents, source.pos, &dest, "\t")) {
+	if (!json_transcode_json_to_binary(source.contents, source.pos, &dest)) {
 		printf("Error transcoding: %s\n", (char*)dest.contents);
 		return 1;
 	}
 
-	fwrite(dest.contents, dest.pos, 1, stdout);
+	hexdump(stdout, dest.contents, dest.pos);
 
 	fprintf(stdout, "\n");
 
