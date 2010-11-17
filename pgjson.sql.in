@@ -1,3 +1,37 @@
-MODULE_PATHNAME
+SET client_min_messages TO warning;
+BEGIN;
+DROP TYPE IF EXISTS json CASCADE;
+CREATE TYPE json;
+
+-- In/out functions for json datatype
+CREATE OR REPLACE FUNCTION json_in(cstring)
+   RETURNS jsonbinary
+   AS 'MODULE_PATHNAME', 'pgjson_json_in'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION json_out(json)
+   RETURNS cstring
+   AS 'MODULE_PATHNAME', 'pgjson_json_out'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION json_recv(internal)
+   RETURNS json
+   AS 'MODULE_PATHNAME', 'pgjson_json_recv'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+CREATE OR REPLACE FUNCTION json_send(json)
+   RETURNS bytea
+   AS 'MODULE_PATHNAME', 'pgjson_json_send'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+
+CREATE TYPE json (
+   internallength = variable,
+   alignment = int4,
+   storage = main,
+   input = json_in,
+   output = json_out,
+   send = json_send,
+   receive = json_recv
+);
+
+COMMIT;
+
 
 

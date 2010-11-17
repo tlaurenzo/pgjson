@@ -7,9 +7,10 @@ OBJS = \
 	jsonlib/json_validate_json.o \
 	jsonlib/dynbuffer.o \
 	jsonlib/jsonlex.tab.o \
-	jsonlib/jsonutil.o
+	jsonlib/jsonutil.o \
+	pgjson.o
 
-#PG_CPPFLAGS = -Werror
+PG_CPPFLAGS = -DJSON_USE_PALLOC -Wimplicit
 
 MODULE_PATHNAME = $(shell pwd)/pgjson.so
 

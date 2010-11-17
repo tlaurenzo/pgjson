@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "jsonmalloc.h"
+
 typedef struct {
 	uint8_t *contents;
 	size_t   pos;
@@ -26,7 +28,7 @@ extern void dynbuffer_realloc(dynbuffer_t *buffer, size_t needed_capacity);
 #define dynbuffer_init() { }
 #define dynbuffer_init_allocheader(header_size) { .allocheader = header_size }
 #define dynbuffer_destroy(dynbuffer) \
-	if ((dynbuffer)->contents) free((dynbuffer)->contents - (dynbuffer)->allocheader);
+	if ((dynbuffer)->contents) JSON_free((dynbuffer)->contents - (dynbuffer)->allocheader);
 	
 #define dynbuffer_clear(dynbuffer) (dynbuffer)->pos=0;
 

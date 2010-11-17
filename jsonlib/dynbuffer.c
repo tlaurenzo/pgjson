@@ -13,9 +13,9 @@ void dynbuffer_realloc(dynbuffer_t *buffer, size_t needed_capacity)
 	if (new_capacity<CAPACITY_MIN) new_capacity=CAPACITY_MIN;
 	
 	if (buffer->contents) {
-		buffer->contents=(uint8_t*)realloc(buffer->contents-allocheader, new_capacity+allocheader)+allocheader;
+		buffer->contents=(uint8_t*)JSON_realloc(buffer->contents-allocheader, new_capacity+allocheader)+allocheader;
 	} else {
-		buffer->contents=(uint8_t*)malloc(new_capacity+allocheader)+allocheader;
+		buffer->contents=(uint8_t*)JSON_malloc(new_capacity+allocheader)+allocheader;
 	}
 	buffer->capacity=new_capacity;
 }
