@@ -53,7 +53,7 @@ pgjson_json_out(PG_FUNCTION_ARGS)
 	if (!success) {
 		ereport(ERROR, (
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("Corrupt binary data")
+				errmsg("Corrupt binary json data")
 				));
 		return 0;
 	}

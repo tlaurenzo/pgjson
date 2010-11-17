@@ -5,7 +5,7 @@ CREATE TYPE json;
 
 -- In/out functions for json datatype
 CREATE OR REPLACE FUNCTION json_in(cstring)
-   RETURNS jsonbinary
+   RETURNS json
    AS 'MODULE_PATHNAME', 'pgjson_json_in'
    LANGUAGE 'C' IMMUTABLE STRICT;
 CREATE OR REPLACE FUNCTION json_out(json)
