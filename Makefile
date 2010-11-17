@@ -1,5 +1,5 @@
 MODULE_big = pgjson
-#DATA_built = pgjson.sql
+DATA_built = pgjson.sql pgjson.dev.sql
 OBJS = \
 	jsonlib/json_transcode_to_json.o \
 	jsonlib/json_transcode_json_to_binary.o \
@@ -10,9 +10,17 @@ OBJS = \
 	jsonlib/jsonutil.o
 
 #PG_CPPFLAGS = -Werror
-	
+
+MODULE_PATHNAME = $(shell pwd)/pgjson.so
+
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 
+pgjson.sql: pgjson.sql.in
+	sed -e "s,MODULE_PATHNAME,pgjson,g" $< >$@
+	
+pgjson.dev.sql: pgjson.sql.in
+	sed -e "s,MODULE_PATHNAME,$(MODULE_PATHNAME),g" $< >$@
+	
 

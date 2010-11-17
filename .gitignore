@@ -1,3 +1,6 @@
+pgjson.sql
+pgjson.dev.sql
+
 *.o
 *.so
 *~
