@@ -5,25 +5,6 @@ in a PostgreSQL database.  For the purpose of this discussion "JSON" is taken to
 the eco-system of encodings for data-structures comprised of arrays, dictionaries and primitives
 such as integers, floats, strings, dates, etc.
 
-This module uses a modified [BSON](http://bsonspec.org/) encoding for its data at rest.  BSON was
-created for [MongoDB](http://www.mongodb.org/display/DOCS/BSON) to serve a similar purpose.  The primary
-modification is a special encoding for non-Document root values.  For background, the original
-BSON spec defines a Document as the abstraction for storing both Lists and Dictionaries and only
-allows for a single Document (interpreted as a Dictionary) to be stored as the root element of
-a stream.  This implementation creates a superset of BSON capable of storing arbitrary BSON value
-types at the root by taking advantage of the high order bit of the first int32 of the stream.  If the
-high order bit is 1, then the first int32 is taken as a negated two's-complement Element Type followed
-directly by the Element value exactly as specified for within a Document.  This hack works because
-the first four bytes of a stream are supposed to be a little-endian signed 32bit integer representing
-the Document length.  Since a length can never be negative, it means that the high-order bit of the stream's
-first byte will never by 1 for a standard BSON stream.
-
-This BSON extension creates a workable format for a portable binary representation of any BSON value,
-effectively creating a packed binary variant for representing any type of data.  Integrating this into
-the Pgjson system allows full correspondence between BSON types and PostgreSQL types.  One side-effect
-of this is that the "json" datatype introduced by this package is effectively an "any" type capable
-of storing and accessing a wide range of primitives, Lists and Dictionaries.  With appropriate support
-functions, this takes PostgreSQL a fair way to being a multi-value database.
 
 Author and History
 ------------------
@@ -56,11 +37,6 @@ This project is currently a toy.  Production use would be insane at this junctur
 Dependencies
 ------------
 
-* autoconf (developed with 2.65 and 2.68)
-* automake (developed with 1.11)
-* libtool  (developed with 2.2.6 and 2.4)
-* flex (developed with 2.5.35)
-* bison (developed with 2.3 and 2.4.1)
 * postgresql (developed with 8.4 and 9.0)
 
 Compatibility
@@ -72,36 +48,16 @@ configurations:
 *	Ubuntu 10.04 32bit x86 (gcc 4.4.3)
 *	Ubuntu 10.04 64bit x86 (gcc 4.4.3)
 
-In order to work
-on big endian systems, several byte swap macros in bsonconst.h will need to be defined properly.  On systems
-that only allow aligned memory access, READ_INT32 and READ_INT64 macros in bsonparser.c will need to be
-defined properly.
-
-Due to an unfortunate design decision, there is a dependency on funopen/fopencookie to attach a custom write
-function to a C stream.  This will work on BSD and Linux based systems, but others (Solaris, Windows, etc) will
-not build until this is factored out.  It shouldn't be very hard to do, but I haven't gotten to it yet.  The code
-that uses this facility was written early on when I was just prototyping and needs to be revisited.
 
 Building
 --------
-The project does not yet install, but it can be run out of the dev tree.  Ensure that the following are on your
-PATH and that you have the PostgreSQL server headers installed (try postgresql-server-8.4-dev and friends on Ubuntu):
+Make sure that pgxs is on the path and all postgresql dev packages are installed and
+run:
 
-*	autoconf
-*	aclocal
-*	automake
-*	libtoolize
-*	flex
-*	bison
-*	pg_config
-
-Then run:
-
-*	./autobootstrap.sh
 *	make
 
-The shared library for the server will be pgplugin/libpgjson-v.v.v.so.  The SQL script to install is generated at
-pgplugin/pgjson.sql.  Note that this script is intended for use against a DEV database as it has a hard-coded
+The shared library for the server will be pgjson.so.  The SQL script to install is generated at
+pgjson.dev.sql.  Note that this script is intended for use against a DEV database as it has a hard-coded
 reference to the absolute location of the shared library in the dev tree and uses DROP...CASCADE constructs
 that can trash any real database.
 
@@ -109,25 +65,16 @@ PostgreSQL Types
 -------------------------------------
 The following types are defined:
 
-* json - The core type.  Internally represented as an extended BSON stream.
-  Externally represented as JSON text with format flags that ensure roundtripping
-  of non-native JSON types.  This type can hold any legal BSON stream, which practically
-  means that it can hold any value legal in JSON plus a handful of other types (
-  binary, date, etc).  The conversion functions tend to no raise errors but
-  returning an "undefined" json value.
-* jsonbinary - Same as json except that the external representation defaults to
-  the internal representation (BSON stream).  This type is binary compatible with
-  json.
-* jsonpath - Represents a JSON evaluation path for referencing a part of a JSON
-  document.  Think of this as a compiled JavaScript expression.
+* json - The core type. Internally uses a binary representation for storing
+the data
   
-Casts
+Casts (not yet re-implemented)
 =====
 Casting is provided to and from all primitive types.  The way this is done
 is being investigated to determine the right set of casts and auxillary
 functions to make interactions natual feeling.
 
-Operators
+Operators (not yet re-implemented)
 =========
 The "->" operator is an alias for the jsoneval(json,jsonpath) function, allowing
 selection of json members with a dereferncing-like syntax.  For exmaple, assume
@@ -190,151 +137,6 @@ And run queries against it:
    (1 row)	
 	
    
-Example
--------
-Here is a stupid example that exercises the json and jsonbinary datatypes (these types differ in that json
-uses a JSON text-based external representation whereas jsonbinary exposes the binary representation as its
-external form).
-
-	drop table if exists testbin;
-	create table testbin(c jsonbinary);
-	
-	insert into testbin values (E'\\xff000ffff000ffffff');
-	insert into testbin values (E'\\xf6');
-	insert into testbin values (E'\\xfa');
-	insert into testbin values (E'\\xf800');
-	insert into testbin values (E'\\xf801');
-	insert into testbin values (E'\\xfe03000000484900');
-	insert into testbin values (E'\\xf0cafebabe');
-	insert into testbin values (E'\\xeecafebabecafebabe');
-	
-	insert into testbin values (E'\\x0500000000');
-	insert into testbin values ('{first: 1, second: 2, third: [1, 2]}'::varchar);
-	
-	select c::text as json, c as native from testbin;
-	
-	drop table if exists testtext;
-	create table testtext(c json);
-	
-	insert into testtext select * from testbin;
-	insert into testtext values ('{}');
-	insert into testtext values ('{first: 1, second: 2, third: [1, 2]}');
-	insert into testtext values ('{first: [1, 2]}');
-	
-	select c::text as json, c::bytea as bytes from testtext;
-
-And the output:
-
-						  json                 |                                                     native                                                     
-	--------------------------------------+----------------------------------------------------------------------------------------------------------------
-	 nan                                  | \xffffffff000ffff000ffffff
-	 null                                 | \xf6ffffff
-	 undefined                            | \xfaffffff
-	 false                                | \xf8ffffff00
-	 true                                 | \xf8ffffff01
-	 "HI"                                 | \xfeffffff03000000484900
-	 -1095041334                          | \xf0ffffffcafebabe
-	 -4703166714098286902                 | \xeeffffffcafebabecafebabe
-	 {}                                   | \x0500000000
-	 {"first":1,"second":2,"third":[1,2]} | \x360000001066697273740001000000107365636f6e640002000000047468697264001300000010300001000000103100020000000000
-	(10 rows)
-	
-						  json                 |                                                     bytes                                                      
-	--------------------------------------+----------------------------------------------------------------------------------------------------------------
-	 nan                                  | \xffffffff000ffff000ffffff
-	 null                                 | \xf6ffffff
-	 undefined                            | \xfaffffff
-	 false                                | \xf8ffffff00
-	 true                                 | \xf8ffffff01
-	 "HI"                                 | \xfeffffff03000000484900
-	 -1095041334                          | \xf0ffffffcafebabe
-	 -4703166714098286902                 | \xeeffffffcafebabecafebabe
-	 {}                                   | \x0500000000
-	 {"first":1,"second":2,"third":[1,2]} | \x360000001066697273740001000000107365636f6e640002000000047468697264001300000010300001000000103100020000000000
-	 {}                                   | \x0500000000
-	 {"first":1,"second":2,"third":[1,2]} | \x360000001066697273740001000000107365636f6e640002000000047468697264001300000010300001000000103100020000000000
-	 {"first":[1,2]}                      | \x1f000000046669727374001300000010300001000000103100020000000000
-	(13 rows)
-	
-	
-Extended BSON Grammar
-=====================
-The following grammar extends the one found on bsonspec.org to include
-root value semantics.  Note that the tag type values in rootelement
-are the negated two's complement values of the same type from element.
-Interpretation of the streeam as either a rootelement or document is
-done by checking the first int32.  If its high order bit is set (negative)
-then it is a rootelement.  Otherwise, it is a document.
-
-(Portions adapted from bsonspec.org)
-
-	stream ::= rootelement
-				| document
-				
-	rootelement ::=
-					 | "\xffffffff" double     /* double literal */
-					 | "\xfeffffff" string     /* string literal */
-					 | "\xfdffffff" document   /* as dictionary */
-					 | "\xfcffffff" document   /* as array */
-					 | "\xfbffffff" binary
-					 | "\xfaffffff" 			/* undefined */
-					 | "\xf9ffffff" (byte*12)	/* ObjectId */
-					 | "\xf8ffffff" "\x00"		/* boolean false */
-					 | "\xf8ffffff" "\x01"		/* boolean true */
-					 | "\xf7ffffff" int64		/* UTC datetime */
-					 | "\xf6ffffff"            /* null */
-					 | "\xf5ffffff" cstring cstring /* regular expression */
-					 | "\xf4ffffff" string (byte*12) /* DBPointer */
-					 | "\xf3ffffff" string     /* javascript code */
-					 | "\xf2ffffff" string     /* symbol */
-					 | "\xf1ffffff" code_w_s   /* javascript code with scope */
-					 | "\xf0ffffff" int32      /* 32bit int literal */
-					 | "\xefffffff" int64      /* timestamp */
-					 | "\xeeffffff" int64      /* 64bit int literal */
-	
-	document	::=	int32 e_list "\x00"	   /* BSON Document */
-	
-	e_list	::=	element e_list	         /* Sequence of elements */
-			|	""	
-	
-	element	::=	"\x01" e_name double	   /* Floating point */
-			|	"\x02" e_name string	         /* UTF-8 string */
-			|	"\x03" e_name document	      /* Embedded document */
-			|	"\x04" e_name document	      /* Array */
-			|	"\x05" e_name binary	         /* Binary data */
-			|	"\x06" e_name	               /* Undefined */
-			|	"\x07" e_name (byte*12)	      /* ObjectId */
-			|	"\x08" e_name "\x00"	         /* Boolean "false" */
-			|	"\x08" e_name "\x01"	         /* Boolean "true" */
-			|	"\x09" e_name int64	         /* UTC datetime */
-			|	"\x0A" e_name	               /* Null value */
-			|	"\x0B" e_name cstring cstring	/* Regular expression */
-			|	"\x0C" e_name string (byte*12)	/* DBPointer � Deprecated */
-			|	"\x0D" e_name string	            /* JavaScript code */
-			|	"\x0E" e_name string	            /* Symbol */
-			|	"\x0F" e_name code_w_s	         /* JavaScript code w/ scope */
-			|	"\x10" e_name int32	         /* 32-bit Integer */
-			|	"\x11" e_name int64	         /* Timestamp */
-			|	"\x12" e_name int64	         /* 64-bit integer */
-			|	"\xFF" e_name	               /* Min key */
-			|	"\x7F" e_name	               /* Max key */
-	
-	e_name	::=	cstring	               /* Key name */
-	
-	string	::=	int32 (byte*) "\x00"	   /* String */
-	
-	cstring	::=	(byte*) "\x00"	         /* C String */
-	
-	binary	::=	int32 subtype (byte*)	/* Binary */
-	
-	subtype	::=	"\x00"	               /* Binary / Generic */
-			|	"\x01"	                     /* Function */
-			|	"\x02"	                     /* Binary (Old) */
-			|	"\x03"	                     /* UUID *
-			|	"\x05"	                     /* MD5 */
-			|	"\x80"	                     /* User defined */
-	
-	code_w_s	::=	int32 string document	/* Code w/ scope */
 					
 	
 License and Copyright
