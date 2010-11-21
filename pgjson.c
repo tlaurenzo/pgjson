@@ -15,6 +15,32 @@ PG_MODULE_MAGIC;
 		PG_RETURN_POINTER(dynbuffer_allocbuffer(&dynbuffer)); \
 	}
 
+/*** general json functions (not related to datatype) ***/
+/* JsonNormalize(text) as text */
+PG_FUNCTION_INFO_V1(pgjson_json_normalize);
+Datum
+pgjson_json_normalize(PG_FUNCTION_ARGS)
+{
+	void *input_data;
+	size_t input_length;
+	dynbuffer_t buffer=dynbuffer_init_allocheader(VARHDRSZ);
+	bool success;
+
+	input_data=PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(0));
+	input_length=VARSIZE_ANY_EXHDR(input_data);
+
+	success=json_transcode_json_to_json((uint8_t*)VARDATA_ANY(input_data), input_length, &buffer);
+	if (!success) {
+		ereport(ERROR, (
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("JSON parse error: %s", (char*)buffer.contents)
+				));
+		return 0;
+	}
+
+	PG_RETURN_DYNBUFFER(buffer);
+}
+
 /*** json io ***/
 PG_FUNCTION_INFO_V1(pgjson_json_in);
 Datum
@@ -29,7 +55,7 @@ pgjson_json_in(PG_FUNCTION_ARGS)
 	if (!success) {
 		ereport(ERROR, (
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("JSON parse error: %s", (char*)buffer.contents)
+				errmsg("JSON parse error: %s for input %s", (char*)buffer.contents, input_text)
 				));
 		return 0;
 	}

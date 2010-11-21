@@ -3,6 +3,12 @@ BEGIN;
 DROP TYPE IF EXISTS json CASCADE;
 CREATE TYPE json;
 
+-- General purpose json support functions (not related to datatype)
+CREATE OR REPLACE FUNCTION JsonNormalize(text)
+   RETURNS text
+   AS 'MODULE_PATHNAME', 'pgjson_json_normalize'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+
 -- In/out functions for json datatype
 CREATE OR REPLACE FUNCTION json_in(cstring)
    RETURNS json
