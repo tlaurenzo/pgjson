@@ -24,4 +24,6 @@ pgjson.sql: pgjson.sql.in
 pgjson.dev.sql: pgjson.sql.in
 	sed -e "s,MODULE_PATHNAME,$(MODULE_PATHNAME),g" $< >$@
 	
-
+reload: pgjson.so pgjson.dev.sql
+	psql -f pgjson.dev.sql
+	

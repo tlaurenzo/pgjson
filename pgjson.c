@@ -11,7 +11,7 @@ PG_MODULE_MAGIC;
 #define PG_RETURN_DYNBUFFER(dynbuffer) \
 	{ \
 		dynbuffer_ensure(&dynbuffer, 0); \
-		SET_VARSIZE(dynbuffer_allocbuffer(&dynbuffer), dynbuffer.pos); \
+		SET_VARSIZE(dynbuffer_allocbuffer(&dynbuffer), dynbuffer.pos + VARHDRSZ); \
 		PG_RETURN_POINTER(dynbuffer_allocbuffer(&dynbuffer)); \
 	}
 
@@ -76,3 +76,11 @@ pgjson_json_send(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(PG_GETARG_DATUM(0));
 }
 
+/* json support functions */
+// JsonAsBinary(json) as Bytea
+PG_FUNCTION_INFO_V1(pgjson_json_as_binary);
+Datum
+pgjson_json_as_binary(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_DATUM(PG_GETARG_DATUM(0));
+}

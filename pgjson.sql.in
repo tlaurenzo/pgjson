@@ -31,6 +31,12 @@ CREATE TYPE json (
    receive = json_recv
 );
 
+/** json support functions **/
+CREATE OR REPLACE FUNCTION JsonAsBinary(json)
+   RETURNS bytea
+   AS 'MODULE_PATHNAME', 'pgjson_json_as_binary'
+   LANGUAGE 'C' IMMUTABLE STRICT;
+
 COMMIT;
 
 
