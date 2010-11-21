@@ -1,0 +1,24 @@
+Running benchmark with 100 iterations per step
+Loading data...
+Data loaded.
+=== DOCUMENT SIZE STATISTICS ===
+    Document Name     | Original Size | Binary Size | Normalized Size | Percentage Savings 
+----------------------+---------------+-------------+-----------------+--------------------
+ jsonorg_sample1.json |           582 |         311 |             360 |   13.6111111111111
+ jsonorg_sample2.json |           241 |         146 |             183 |   20.2185792349727
+ jsonorg_sample3.json |           601 |         326 |             389 |   16.1953727506427
+ jsonorg_sample4.json |          3467 |        2466 |            2710 |   9.00369003690037
+ jsonorg_sample5.json |           872 |         469 |             613 |   23.4910277324633
+(5 rows)
+
+=== TEST PARSE AND SERIALIZATION ===
+Null Parse:
+       12.12 real         2.51 user         0.13 sys
+Parse to Binary:
+       13.38 real         2.51 user         0.14 sys
+Serialize from Binary:
+       16.65 real         2.51 user         0.13 sys
+Normalize Text:
+       18.99 real         2.51 user         0.13 sys
+Roundtrip (parse to binary and serialize):
+       18.58 real         2.51 user         0.14 sys
